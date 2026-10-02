@@ -28,6 +28,7 @@ import {
   type Property,
 } from "./db";
 import { comparablesFor } from "./comparables";
+import { commonLocations, propertyTypes as knownPropertyTypes } from "./schemas";
 import { isEmailConfigured, sendExternalInquiryEmail } from "./email";
 import { describeOpenAIError, getOpenAI, isOpenAIConfigured, OPENAI_MODEL } from "./openai";
 
@@ -94,12 +95,12 @@ const tools: FunctionTool[] = ([
         propertyTypes: {
           type: "array",
           items: { type: "string" },
-          description: "e.g. Apartment, Villa, Townhouse, Studio, Penthouse, Office. Omit or leave empty to match any type.",
+          description: `One or more of: ${knownPropertyTypes.join(", ")}. Omit or leave empty to match any type.`,
         },
         locations: {
           type: "array",
           items: { type: "string" },
-          description: "e.g. Dubai Marina, Downtown Dubai. Omit or leave empty to match any location.",
+          description: `Area names. LeaseMatch areas: ${commonLocations.join(", ")}. Landmarks are fine too (e.g. "Hub71" is on Al Maryah Island). Omit or leave empty to match any location.`,
         },
         maxBudget: {
           type: "number",
@@ -205,11 +206,30 @@ async function runTool(
       .map((p) => ({ property: p, score: scoreProperty(p, fakePrefs) }))
       .sort((a, b) => b.score - a.score);
 
+    // Forgiving matching: the model may say "studio", "Al Maryah" or "Hub71"
+    // rather than the exact stored names, so compare case-insensitively,
+    // allow partial matches either way, and also look in title/description.
+    const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const loose = (a: string, b: string) => {
+      const x = norm(a);
+      const y = norm(b);
+      return x.length > 0 && y.length > 0 && (x.includes(y) || y.includes(x));
+    };
+    const landmarkAreas: Record<string, string> = { hub71: "Al Maryah Island", adgm: "Al Maryah Island" };
+    const wantedAreas = locations.map((l) => landmarkAreas[norm(l).replace(/ /g, "")] ?? l);
+
     if (propertyTypes.length) {
-      matches = matches.filter((m) => propertyTypes.includes(m.property.property_type));
+      matches = matches.filter((m) => propertyTypes.some((t) => loose(t, m.property.property_type)));
     }
-    if (locations.length) {
-      matches = matches.filter((m) => locations.includes(m.property.location));
+    if (wantedAreas.length) {
+      matches = matches.filter((m) =>
+        wantedAreas.some(
+          (l) =>
+            loose(l, m.property.location) ||
+            norm(m.property.title).includes(norm(l)) ||
+            norm(m.property.description ?? "").includes(norm(l))
+        )
+      );
     }
 
     const inBudget = maxBudget ? matches.filter((m) => m.property.price <= maxBudget) : matches;

@@ -7,7 +7,7 @@ LeaseMatch gives them an AI rental agent that searches verified listings
 *and* today's public portal ads, contacts landlords for them, negotiates,
 and carries the deal through e-signature and payment.
 
-- **Live demo:** _add Render URL here_
+- **Live demo:** https://hub71ai-leasematchuae.onrender.com
 - **Demo login (tenant):** `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026`
 - **Provider login:** `marina.pm@sample.leasematch.test` / `LeaseMatch-demo-2026`
 
