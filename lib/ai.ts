@@ -312,6 +312,13 @@ async function runTool(
 
   if (name === "apply_to_property") {
     const propertyId = String(input.propertyId || "");
+    const target = listLiveProperties().find((p) => p.id === propertyId);
+    if (!target) {
+      return {
+        error:
+          "No live LeaseMatch listing has that propertyId. Use the exact id returned by search_properties (applications only work for LeaseMatch's own listings, never web results).",
+      };
+    }
     const existing = getApplicationForTenant(propertyId, ctx.tenantId);
     if (existing) {
       return { alreadyApplied: true, status: existing.status };
