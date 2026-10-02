@@ -8,8 +8,8 @@ services:
     runtime: node
     plan: starter
     region: frankfurt
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start
+    buildCommand: npx --yes pnpm@12.8.1 install --frozen-lockfile && npx --yes pnpm@12.8.1 build
+    startCommand: npm start
     healthCheckPath: /
     disk:
       name: leasematch-data
