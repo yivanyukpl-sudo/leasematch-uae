@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f4f9;
+  --surface: #ffffff;
+  --border: #e2e0ec;
+  --text: #1c2333;
+  --text-muted: #5b6178;
+  --accent: #0e2a4d;
+  --accent-ink: #ffffff;
+  --gold: #a8792f;
+  --gold-soft: #f4ebdb;
+  --danger: #b3413a;
+  --success: #2f7d5e;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-display: var(--font-fraunces, Georgia, serif);
+  --font-sans: var(--font-plex-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-plex-mono, ui-monospace, monospace);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-plex-sans, "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif);
+}
+
+.font-display {
+  font-family: var(--font-fraunces, "Fraunces", Georgia, serif);
+}

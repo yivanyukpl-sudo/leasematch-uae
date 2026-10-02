@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeaseMatch — Agent Outreach Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F4F9; --surface:#FFFFFF; --surface-2:#F0EEF6;
+    --ink:#131A2C; --ink-muted:#5B5F72; --ink-faint:#8B8FA0;
+    --line:#E1DEEA; --line-strong:#CBC7DA;
+    --accent:#0E2A4D; --accent-ink:#FFFFFF; --accent-soft:#E7EAF2; --accent-soft-ink:#0E2A4D;
+    --gold:#A8792F; --gold-soft:#F3E9D6;
+    --good:#2F7D4F; --good-soft:#E4F1E7;
+    --warn:#B4791C; --warn-soft:#FBEEDA;
+    --critical:#B23A34; --critical-soft:#F8E4E2;
+    --portal-a:#1f7a5c; --portal-b:#c8322f;
+    --shadow: 0 1px 2px rgba(19,26,44,.04), 0 6px 20px -8px rgba(19,26,44,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+      --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+      --line:#2A2E3C; --line-strong:#383D4E;
+      --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+      --gold:#D4AC63; --gold-soft:#332A18;
+      --good:#6FBF8B; --good-soft:#1B2F22; --warn:#E0A94C; --warn-soft:#332811;
+      --critical:#E38F89; --critical-soft:#33201E;
+      --portal-a:#4fb08d; --portal-b:#e3706d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+    --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+    --line:#2A2E3C; --line-strong:#383D4E;
+    --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+    --gold:#D4AC63; --gold-soft:#332A18;
+    --good:#6FBF8B; --good-soft:#1B2F22; --warn:#E0A94C; --warn-soft:#332811;
+    --critical:#E38F89; --critical-soft:#33201E;
+    --portal-a:#4fb08d; --portal-b:#e3706d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;margin:0;letter-spacing:-.01em}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+  .mark{width:30px;height:30px;border:2px solid var(--ink);border-radius:3px;position:relative;overflow:hidden;flex:none}
+  .mark::before{content:"";position:absolute;inset:0 50% 0 0;background:var(--accent)}
+  .mark::after{content:"";position:absolute;inset:0 0 0 50%;background:var(--gold)}
+  .mark span{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;height:100%;font-family:'Fraunces';font-weight:600;font-size:13px;color:#fff}
+  .wordmark{font-family:'Fraunces';font-weight:600;font-size:19px}
+  .wordmark .l{color:var(--accent)} .wordmark .m{color:var(--gold)}
+  .sim-tag{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:9px;font-weight:600;font-size:13px}
+  .btn:hover{background:var(--surface-2)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  .speed{display:flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+  .speed button{border:none;background:var(--surface);color:var(--ink-muted);padding:7px 10px;font-weight:600;font-size:12px}
+  .speed button.on{background:var(--ink);color:var(--bg)}
+
+  .chapters{display:flex;gap:6px;padding:12px 20px;overflow-x:auto;border-bottom:1px solid var(--line);background:var(--surface)}
+  .chap{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink-muted);border-radius:99px;padding:5px 12px 5px 6px;font-size:12.5px;font-weight:600}
+  .chap .n{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:11px}
+  .chap.done{color:var(--ink)} .chap.done .n{background:var(--good-soft);color:var(--good)}
+  .chap.now{border-color:var(--gold);background:var(--gold-soft);color:var(--ink)} .chap.now .n{background:var(--gold);color:#fff}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;padding:18px 20px 40px;max-width:1320px;margin:0 auto}
+  @media (max-width:980px){.layout{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .stage{min-height:560px;padding:22px;position:relative;overflow:hidden}
+  .stage-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px}
+  .stage-head h2{font-size:22px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}
+  .muted{color:var(--ink-muted)} .faint{color:var(--ink-faint)}
+  .fade-in{animation:fade .45s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .side{display:flex;flex-direction:column;gap:14px}
+  .panel-h{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .panel-h h3{font-family:'IBM Plex Sans';font-size:13.5px;font-weight:700}
+  .clock{font-family:'IBM Plex Mono';font-size:12px;color:var(--ink-muted)}
+  .log{max-height:420px;overflow-y:auto;padding:8px 14px 12px;display:flex;flex-direction:column;gap:8px}
+  .log-row{display:grid;grid-template-columns:46px 18px 1fr;gap:6px;font-size:12.5px;animation:fade .3s ease both}
+  .log-row .t{font-family:'IBM Plex Mono';color:var(--ink-faint);font-size:11.5px;padding-top:1px}
+  .approvals{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
+  .appr{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:8px 10px;border-radius:9px;background:var(--surface-2)}
+  .appr .s{font-weight:700;font-size:11px;padding:2px 7px;border-radius:99px;flex:none}
+  .appr .s.wait{background:var(--warn-soft);color:var(--warn)} .appr .s.ok{background:var(--good-soft);color:var(--good)}
+  .principles{padding:12px 14px;font-size:12px;color:var(--ink-muted)}
+  .principles li{margin-bottom:4px}
+
+  /* brief */
+  .brief{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:700px){.brief{grid-template-columns:1fr}}
+  .bubble{padding:11px 14px;border-radius:14px;max-width:92%;font-size:14px}
+  .bubble.me{background:var(--accent);color:var(--accent-ink);margin-left:auto;border-bottom-right-radius:4px}
+  .bubble.ai{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .who{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.7;margin-bottom:2px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
+  .kv .k{color:var(--ink-muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--gold-soft);color:var(--gold)}
+
+  /* browser frames */
+  .browsers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.browsers{grid-template-columns:1fr}}
+  .browser{border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+  .dots i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line-strong);margin-right:4px}
+  .url{flex:1;font-family:'IBM Plex Mono';font-size:11.5px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .portal-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#fff;font-weight:700;font-size:13px}
+  .portal-head small{font-weight:500;opacity:.85;font-size:10.5px}
+  .portal-a{background:var(--portal-a)} .portal-b{background:var(--portal-b)}
+  .results{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:250px}
+  .res{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:9px;animation:fade .35s ease both}
+  .thumb{height:46px;border-radius:7px}
+  .res .ti{font-weight:600;font-size:12.5px;line-height:1.3}
+  .res .me{font-size:11.5px;color:var(--ink-muted)}
+  .res .pr{font-family:'IBM Plex Mono';font-weight:600;font-size:12px;white-space:nowrap}
+  .searchline{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);font-size:13px}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--good-soft);color:var(--good);white-space:nowrap}
+  .badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.crit{background:var(--critical-soft);color:var(--critical)} .badge.blue{background:var(--accent-soft);color:var(--accent-soft-ink)}
+  .caret::after{content:"▍";animation:blink 1s steps(2) infinite;color:var(--gold)}
+  @keyframes blink{50%{opacity:0}}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr.pick td{background:var(--gold-soft)}
+  .score{font-family:'IBM Plex Mono';font-weight:600}
+  .bar-meter{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;width:70px}
+  .bar-meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent))}
+  .approval-card{margin-top:16px;padding:14px 16px;border:1.5px solid var(--gold);border-radius:12px;background:var(--gold-soft);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+
+  /* outreach */
+  .outreach{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:900px){.outreach{grid-template-columns:1fr}}
+  .form-mock{padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+  .fm-field{border:1px solid var(--line-strong);border-radius:7px;padding:6px 8px;min-height:30px;background:var(--surface-2)}
+  .fm-field.area{min-height:96px;white-space:pre-wrap}
+  .fm-label{font-size:10.5px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
+  .fm-btn{align-self:flex-start;padding:6px 12px;border-radius:7px;color:#fff;font-weight:700;font-size:12px;border:none}
+  .sent-stamp{font-size:11.5px;font-weight:700;color:var(--good)}
+  .relay{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-faint)}
+
+  /* inbox */
+  .inbox{display:flex;flex-direction:column;gap:10px}
+  .mail{display:grid;grid-template-columns:38px 1fr auto;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;animation:fade .4s ease both;background:var(--surface)}
+  .av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:'Fraunces'}
+  .mail .from{font-weight:600;font-size:13.5px}
+  .mail .snip{font-size:13px;color:var(--ink-muted);margin-top:2px}
+  .mail .agent-note{margin-top:7px;font-size:12px;padding:6px 9px;border-radius:8px;background:var(--accent-soft);color:var(--accent-soft-ink)}
+
+  /* phone */
+  .phone-wrap{display:grid;grid-template-columns:240px 1fr;gap:16px}
+  @media (max-width:760px){.phone-wrap{grid-template-columns:1fr}}
+  .phone{background:#0e2a4d;color:#fff;border-radius:22px;padding:26px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:380px}
+  .ring{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
+  .ring .pulse{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.18);animation:pulse 1.4s ease-out infinite}
+  @keyframes pulse{from{transform:scale(.8);opacity:1}to{transform:scale(1.5);opacity:0}}
+  .ring .face{position:relative;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-size:28px}
+  .wave{display:flex;gap:4px;align-items:flex-end;height:34px}
+  .wave i{width:4px;border-radius:3px;background:#9db6e4;height:15%;transition:height .15s}
+  .phone .status{font-family:'IBM Plex Mono';font-size:12px;opacity:.75}
+  .transcript{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;padding-right:4px}
+  .tline{padding:9px 12px;border-radius:12px;font-size:13.5px;max-width:88%;animation:fade .3s ease both}
+  .tline.agent{background:var(--gold-soft)} .tline.callee{background:var(--surface-2);border:1px solid var(--line);margin-left:auto}
+
+  /* in-app chat */
+  .chat-wrap{display:grid;grid-template-columns:1fr 250px;gap:14px}
+  @media (max-width:860px){.chat-wrap{grid-template-columns:1fr}}
+  .chat{border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:470px}
+  .chat-top{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  .chat-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;max-height:430px}
+  .msg{max-width:80%;padding:9px 12px;border-radius:13px;font-size:13.5px;animation:fade .3s ease both}
+  .msg .n{font-size:10.5px;font-weight:700;opacity:.7;margin-bottom:1px}
+  .msg.agent{background:var(--accent);color:var(--accent-ink);margin-left:auto;border-bottom-right-radius:4px}
+  .msg.owner{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.system{align-self:center;max-width:90%;background:transparent;color:var(--ink-faint);font-size:12px;text-align:center;padding:2px}
+  .msg.approval{align-self:stretch;max-width:100%;background:var(--gold-soft);border:1.5px solid var(--gold);color:var(--ink)}
+  .typing{font-size:12px;color:var(--ink-faint);font-style:italic}
+  .deal{padding:14px;font-size:13px}
+  .deal .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .deal .row:last-child{border-bottom:none}
+  .deal .v{font-family:'IBM Plex Mono';font-weight:600}
+  .deal .v{text-align:right}
+  .strike{display:block;text-decoration:line-through;color:var(--ink-faint);font-weight:400;font-size:11px}
+
+  .outcome{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px}
+  @media (max-width:760px){.outcome{grid-template-columns:repeat(2,1fr)}}
+  .kpi{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  .kpi .l{font-size:12px;color:var(--ink-muted)} .kpi .v{font-family:'IBM Plex Mono';font-size:24px;font-weight:600;margin-top:4px}
+  .steps li{margin-bottom:6px}
+  .note{font-size:12px;color:var(--ink-faint);margin-top:16px;border-top:1px dashed var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/demos">
+    <div class="mark"><span>LM</span></div>
+    <div class="wordmark"><span class="l">Lease</span><span class="m">Match</span></div>
+  </a>
+  <div class="sim-tag">Simulation · sample data · no real messages or calls</div>
+  <div class="controls">
+    <button class="btn primary" id="playBtn">❚❚ Pause</button>
+    <button class="btn" id="nextBtn">Next step ›</button>
+    <button class="btn" id="restartBtn">↺ Restart</button>
+    <div class="speed" id="speed">
+      <button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
+    </div>
+  </div>
+</div>
+
+<div class="chapters" id="chapters"></div>
+
+<div class="layout">
+  <div class="card stage" id="stage"></div>
+  <aside class="side">
+    <div class="card">
+      <div class="panel-h"><h3>Agent activity</h3><span class="clock" id="clock">Mon 09:00</span></div>
+      <div class="log" id="log"></div>
+    </div>
+    <div class="card">
+      <div class="panel-h"><h3>Tenant approvals</h3><span class="faint" style="font-size:11.5px">nothing happens without them</span></div>
+      <div class="approvals" id="approvals"><div class="faint" style="font-size:12.5px">None yet.</div></div>
+    </div>
+    <div class="card">
+      <div class="panel-h"><h3>How the agent works</h3></div>
+      <ul class="principles">
+        <li>Searches portals through a search API. It never scrapes them.</li>
+        <li>Says it's an AI acting for a tenant in every message and call.</li>
+        <li>Never commits money, dates or signatures without tenant approval.</li>
+        <li>Moves serious landlords into a verified LeaseMatch thread.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* ---------------- sample data ---------------- */
+const tenant = { name:'Sara M.', first:'Sara', need:'2-bedroom apartment', areas:['Al Reem Island','Al Raha Beach'], budget:140000, moveIn:'1 Nov', extras:['Pet friendly (1 cat)','Parking','Gym'] };
+const hue = i => { const hs=[200,25,170,95,260,45]; const a=hs[i%hs.length], b=hs[(i+2)%hs.length]; return `background:linear-gradient(135deg,hsl(${a} 38% 76%),hsl(${b} 30% 60%))`; };
+const found = [
+  {id:'A', portal:'Bayut',    title:'2BR, Sun Tower — canal view', area:'Al Reem Island', price:135000, sqft:1180, days:45, contact:'Form on listing', who:'Harbour Homes Real Estate', match:92, flags:[['warn','Listed 45 days — likely negotiable']]},
+  {id:'B', portal:'Bayut',    title:'2BR, Gate Tower 2 — upgraded kitchen', area:'Al Reem Island', price:142000, sqft:1250, days:6, contact:'Form on listing', who:'Coastline Properties', match:84, flags:[['crit','1.4% over budget']]},
+  {id:'C', portal:'Dubizzle', title:'2BR in Al Bandar, Al Raha — owner direct, pets OK', area:'Al Raha Beach', price:118000, sqft:1320, days:19, contact:'Chat + email on ad', who:'Owner (direct)', match:95, flags:[['ok','Pets allowed in ad']]},
+  {id:'D', portal:'Dubizzle', title:'2BR, Al Muneera — high floor', area:'Al Raha Beach', price:121000, sqft:1150, days:2, contact:'Chat on ad', who:'Private seller', match:80, flags:[['warn','No parking mentioned']]},
+  {id:'E', portal:'Bayut',    title:'2BR + maid, Marina Square', area:'Al Reem Island', price:165000, sqft:1480, days:12, contact:'Form on listing', who:'Pinnacle Realty', match:52, flags:[['crit','18% over budget']]},
+  {id:'F', portal:'Dubizzle', title:'2BR, Al Zeina — chiller free', area:'Al Raha Beach', price:112000, sqft:1210, days:33, contact:'Phone only', who:'Agent: R. Kapoor', match:88, flags:[['blue','Phone-only listing']]},
+];
+
+/* ---------------- engine ---------------- */
+let phoneTimer = null;
+let runId = 0, paused = false, speed = 1, chapter = 0, clockMin = 9*60, day = 0;
+const CANCEL = Symbol('cancel');
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const days = ['Mon','Tue','Wed','Thu'];
+
+async function wait(ms){
+  const id = runId; let t = 0;
+  while(t < ms){
+    await new Promise(r => setTimeout(r, 40));
+    if(id !== runId) throw CANCEL;
+    if(!paused) t += 40*speed;
+  }
+}
+async function type(el, text, cps = 55){
+  el.classList.add('caret');
+  for(let i = 1; i <= text.length; i += 2){
+    el.textContent = text.slice(0, i);
+    await wait(2000/cps);
+  }
+  el.textContent = text;
+  el.classList.remove('caret');
+}
+function advance(mins){ clockMin += mins; while(clockMin >= 24*60){ clockMin -= 24*60; day++; } renderClock(); }
+function clockText(){ const h = Math.floor(clockMin/60), m = clockMin%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function renderClock(){ $('#clock').textContent = `${days[Math.min(day,3)]} ${clockText()}`; }
+function log(icon, html, mins = 1){
+  advance(mins);
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  row.innerHTML = `<span class="t">${clockText()}</span><span>${icon}</span><span>${html}</span>`;
+  const el = $('#log'); el.appendChild(row); el.scrollTop = el.scrollHeight;
+}
+const approvals = [];
+function approval(text, state){
+  const existing = approvals.find(a => a.text === text);
+  if(existing) existing.state = state; else approvals.push({text, state});
+  $('#approvals').innerHTML = approvals.map(a => `<div class="appr"><span class="s ${a.state==='ok'?'ok':'wait'}">${a.state==='ok'?'Approved':'Waiting'}</span><span>${a.text}</span></div>`).join('');
+}
+function head(eyebrow, title, sub=''){
+  return `<div class="stage-head"><div><div class="eyebrow">${eyebrow}</div><h2>${title}</h2></div><div class="muted" style="font-size:12.5px;text-align:right">${sub}</div></div>`;
+}
+const money = n => 'AED ' + n.toLocaleString('en-US');
+
+/* ---------------- scenes ---------------- */
+const scenes = [
+  { name:'Brief', run: async () => {
+    stage.innerHTML = head('Step 1 · Brief', 'The tenant tells the agent what they need', 'In the LeaseMatch app') + `
+      <div class="brief">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="bubble me fade-in"><div class="who">${tenant.name}</div><span id="b1"></span></div>
+          <div class="bubble ai fade-in" id="b2wrap" style="display:none"><div class="who">LeaseMatch agent</div><span id="b2"></span></div>
+          <div class="bubble me fade-in" id="b3wrap" style="display:none"><div class="who">${tenant.name}</div><span id="b3"></span></div>
+        </div>
+        <div class="card fade-in" style="padding:16px;box-shadow:none" id="briefCard">
+          <div class="eyebrow" style="margin-bottom:8px">Search brief the agent builds</div>
+          <div class="kv" id="kv"></div>
+        </div>
+      </div>`;
+    log('🧑', `${tenant.name} opens a chat with her agent`, 0);
+    await type($('#b1'), "Hi! I'm relocating to Abu Dhabi for a Hub71 startup. I need a 2-bed on Al Reem or Al Raha Beach, max 140k a year, moving 1 November. I have a cat, so it has to be pet friendly. Parking and a gym would be nice.");
+    await wait(600);
+    $('#b2wrap').style.display = '';
+    await type($('#b2'), "Got it. LeaseMatch has 1 verified 2-bed on Al Reem at AED 120k. Want me to also check today's public ads on Bayut and Dubizzle and reach out to the best ones for you? I'll check with you before contacting anyone and before agreeing to anything.");
+    await wait(500);
+    $('#b3wrap').style.display = '';
+    await type($('#b3'), 'Yes please, go ahead.');
+    const rows = [['Type', tenant.need], ['Areas', tenant.areas.join(', ')], ['Budget', money(tenant.budget)+' / yr'], ['Move-in', tenant.moveIn], ['Must have', 'Pet friendly'], ['Nice to have', 'Parking, gym'], ['Sources', 'LeaseMatch verified + Bayut + Dubizzle']];
+    for(const [k,v] of rows){ $('#kv').insertAdjacentHTML('beforeend', `<span class="k fade-in">${k}</span><span class="fade-in"><b>${v}</b></span>`); await wait(220); }
+    log('🧠', 'Brief structured: <b>2BR · Reem/Raha · ≤140k · pets</b>');
+    approval('Search Bayut & Dubizzle on my behalf', 'ok');
+    await wait(1400);
+  }},
+
+  { name:'Search', run: async () => {
+    stage.innerHTML = head('Step 2 · Search', 'Searching today\'s public ads', 'Hosted web search API · no scraping') + `
+      <div class="searchline"><span>🔎</span><span id="q" class="mono" style="flex:1"></span><span class="badge">Search API · no scraping</span></div>
+      <div class="browsers">
+        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">bayut.com/to-rent/2-bedroom-apartments/abu-dhabi/al-reem-island</span></div>
+          <div class="portal-head portal-a">Bayut <small>simulated view</small></div><div class="results" id="r1"></div></div>
+        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">abudhabi.dubizzle.com/property-for-rent/residential/apartmentflat/al-raha-beach</span></div>
+          <div class="portal-head portal-b">Dubizzle <small>simulated view</small></div><div class="results" id="r2"></div></div>
+      </div>
+      <p class="faint" style="font-size:12px;margin-top:12px">Only links that come back from a real search result are kept. Anything the model can't tie to a returned URL is dropped.</p>`;
+    const queries = ['2 bedroom apartment for rent Al Reem Island pet friendly site:bayut.com', '2BR flat for rent Al Raha Beach under 140000 site:dubizzle.com'];
+    for(const q of queries){
+      await type($('#q'), q, 70);
+      log('🔎', `Search: <span class="mono" style="font-size:11.5px">${q.split(' site:')[0]}</span>`, 2);
+      await wait(500);
+    }
+    for(let i=0;i<found.length;i++){
+      const f = found[i];
+      const box = f.portal === 'Bayut' ? $('#r1') : $('#r2');
+      box.insertAdjacentHTML('beforeend', `<div class="res"><div class="thumb" style="${hue(i)}"></div><div><div class="ti">${f.title}</div><div class="me">${f.area} · ${f.sqft} sqft · ${f.who}</div></div><div class="pr">${money(f.price)}</div></div>`);
+      await wait(450);
+    }
+    log('📥', `<b>${found.length}</b> ads returned (${found.filter(f=>f.portal==='Bayut').length} Bayut, ${found.filter(f=>f.portal==='Dubizzle').length} Dubizzle). All links verified`, 3);
+    await wait(1400);
+  }},
+
+  { name:'Shortlist', run: async () => {
+    stage.innerHTML = head('Step 3 · Shortlist', 'Ranking against the brief', 'Fit · price vs area average · red flags') + `
+      <div style="overflow-x:auto"><table><thead><tr><th>Ad</th><th>Source</th><th>Rent</th><th>Fit</th><th>Agent notes</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div id="apprSlot"></div>`;
+    const sorted = [...found].sort((a,b)=>b.match-a.match);
+    for(const f of sorted){
+      $('#tb').insertAdjacentHTML('beforeend', `<tr id="row${f.id}" class="fade-in"><td><b>${f.title.split(' — ')[0]}</b><div class="faint" style="font-size:11.5px">${f.who} · listed ${f.days}d ago</div></td><td>${f.portal}</td><td class="mono">${money(f.price)}</td>
+        <td><div style="display:flex;align-items:center;gap:8px"><span class="score">${f.match}%</span><span class="bar-meter"><i style="width:${f.match}%"></i></span></div></td>
+        <td>${f.flags.map(([c,t])=>`<span class="badge ${c==='ok'?'':c}">${t}</span>`).join(' ')}</td></tr>`);
+      await wait(320);
+    }
+    log('📊', 'Ranked 6 ads. <b>Marina Square</b> dropped (18% over budget)', 2);
+    await wait(700);
+    const picks = ['C','A','F'];
+    for(const id of picks){ $('#row'+id).classList.add('pick'); await wait(350); }
+    $('#apprSlot').innerHTML = `<div class="approval-card fade-in"><div><b>Contact these 3 advertisers?</b><div class="muted" style="font-size:13px">Al Bandar (owner, Dubizzle) · Sun Tower (agency, Bayut) · Al Zeina (agent, phone only)</div></div><span class="badge warn" id="apprState">Waiting for ${tenant.first}</span></div>`;
+    approval('Contact 3 shortlisted advertisers', 'wait');
+    log('🙋', `Asked ${tenant.first} to approve outreach to 3 ads`, 1);
+    await wait(2200);
+    $('#apprState').className = 'badge'; $('#apprState').textContent = `Approved by ${tenant.first}`;
+    approval('Contact 3 shortlisted advertisers', 'ok');
+    log('✅', `${tenant.first} approved outreach`, 6);
+    await wait(1200);
+  }},
+
+  { name:'Reach out', run: async () => {
+    stage.innerHTML = head('Step 4 · Reach out', 'Contacting landlords on the portals themselves', 'Each message says an AI is writing for a tenant') + `
+      <div class="outreach">
+        <div class="browser"><div class="bar"><span class="url">bayut.com · Sun Tower</span></div><div class="portal-head portal-a">Bayut enquiry form <small>simulated</small></div>
+          <div class="form-mock"><span class="fm-label">Name</span><div class="fm-field" id="f1n"></div><span class="fm-label">Email</span><div class="fm-field mono" id="f1e" style="font-size:11px"></div><span class="fm-label">Message</span><div class="fm-field area" id="f1m"></div><button class="fm-btn portal-a" id="f1b">Send enquiry</button><span id="f1s"></span></div></div>
+        <div class="browser"><div class="bar"><span class="url">dubizzle.com · Al Bandar (owner)</span></div><div class="portal-head portal-b">Dubizzle chat <small>simulated</small></div>
+          <div class="form-mock"><span class="fm-label">Message to owner</span><div class="fm-field area" id="f2m"></div><button class="fm-btn portal-b" id="f2b">Send</button><span id="f2s"></span></div></div>
+        <div class="browser"><div class="bar"><span class="url">LeaseMatch relay · email</span></div><div class="portal-head" style="background:var(--accent)">Email to address on the ad</div>
+          <div class="form-mock"><span class="fm-label">To</span><div class="fm-field mono" style="font-size:11px">owner.albandar@example.ae</div><span class="fm-label">Subject</span><div class="fm-field" id="f3s"></div><span class="fm-label">Body</span><div class="fm-field area" id="f3m"></div><button class="fm-btn" style="background:var(--accent)" id="f3b">Send</button><span id="f3x"></span></div></div>
+      </div>
+      <p class="faint" style="font-size:12px;margin-top:12px">Replies go to a per-inquiry relay address (<span class="mono">inquiry-7f3a…@mail.leasematch</span>) and land in the tenant's thread, not their personal inbox. Al Zeina is phone-only, so it gets a call later.</p>`;
+    await type($('#f1n'), `${tenant.name} (via LeaseMatch agent)`, 90);
+    await type($('#f1e'), 'inquiry-7f3a@mail.leasematch.ae', 90);
+    await type($('#f1m'), `Hello, I'm an AI assistant from LeaseMatch writing for a tenant, ${tenant.first}. She's interested in this 2BR from 1 Nov and has a cat. Is the unit pet friendly, is the rent negotiable on 4 cheques, and could she view it this week?`, 110);
+    $('#f1b').textContent = 'Sent ✓'; $('#f1s').innerHTML = '<span class="sent-stamp">Enquiry submitted on Bayut</span>';
+    log('📝', 'Submitted the <b>Bayut</b> enquiry form for Sun Tower', 4);
+    await wait(500);
+    await type($('#f2m'), `Hi! AI assistant from LeaseMatch here, on behalf of tenant ${tenant.first}. Your ad says pets are OK. She'd like to view Al Bandar this week and can move in 1 Nov. Is it still available?`, 110);
+    $('#f2b').textContent = 'Sent ✓'; $('#f2s').innerHTML = '<span class="sent-stamp">Delivered in Dubizzle chat</span>';
+    log('💬', 'Messaged the <b>Dubizzle</b> owner of Al Bandar', 3);
+    await wait(400);
+    await type($('#f3s'), 'Al Bandar 2BR — tenant ready to view', 90);
+    await type($('#f3m'), `Following up by email in case chat isn't monitored. ${tenant.first} works in finance, has documents ready and would sign a 12-month lease.\n\nSent via LeaseMatch on behalf of a prospective tenant. LeaseMatch is not the listing agent.`, 120);
+    $('#f3b').textContent = 'Sent ✓'; $('#f3x').innerHTML = '<span class="sent-stamp">Email sent via relay</span>';
+    log('✉️', 'Emailed the owner at the address <b>published in the ad</b>', 2);
+    await wait(1400);
+  }},
+
+  { name:'Replies', run: async () => {
+    stage.innerHTML = head('Step 5 · Replies', 'Responses come back into one thread', 'The agent reads, classifies and suggests next steps') + `<div class="inbox" id="inbox"></div>`;
+    const mails = [
+      {av:'K', color:'var(--portal-b)', from:'Khalid (owner) · Al Bandar, Al Raha Beach', via:'Dubizzle chat', time:'+42 min', snip:'"Yes, still available and cats are fine. I could do viewings Wednesday evening. Asking 118k but open to discussion for a long lease."', note:'🟢 Hot lead: available, pets OK, open to negotiating. Next step: invite to a LeaseMatch chat.'},
+      {av:'H', color:'var(--portal-a)', from:'Harbour Homes Real Estate · Sun Tower', via:'Bayut enquiry → relay email', time:'+2 h', snip:'"Thanks for your enquiry. Unfortunately the landlord doesn\'t accept pets in this unit. We have a similar unit in Sky Tower at AED 149k."', note:'🔴 Rules out the must-have (pets). Similar unit is over budget. Closing politely.'},
+      {av:'R', color:'var(--warn)', from:'Al Zeina (R. Kapoor)', via:'Phone-only listing', time:'no written channel', snip:'No email or chat on the ad, only a phone number.', note:'📞 Scheduling a phone call (simulated) to ask about availability and pets.'},
+    ];
+    for(const m of mails){
+      $('#inbox').insertAdjacentHTML('beforeend', `<div class="mail"><div class="av" style="background:${m.color}">${m.av}</div><div><div class="from">${m.from}</div><div class="faint" style="font-size:11.5px">${m.via}</div><div class="snip">${m.snip}</div><div class="agent-note">${m.note}</div></div><div class="faint mono" style="font-size:11px">${m.time}</div></div>`);
+      log(m.av==='K'?'🟢':m.av==='H'?'🔴':'📞', m.av==='K'?'Reply from <b>Al Bandar</b> owner: available, pets OK':m.av==='H'?'<b>Sun Tower</b>: no pets. Closed with a thank-you':'<b>Al Zeina</b> is phone-only. Call queued', m.av==='K'?42:m.av==='H'?78:5);
+      await wait(1500);
+    }
+    await wait(900);
+  }},
+
+  { name:'Phone call', run: async () => {
+    stage.innerHTML = head('Step 6 · Phone call', 'The agent calls the phone-only listing', 'Simulated: no real call is placed') + `
+      <div class="phone-wrap">
+        <div class="phone"><div class="ring"><span class="pulse" id="pulse"></span><span class="face">R</span></div>
+          <div style="font-weight:600">R. Kapoor · Al Zeina</div><div class="status" id="pstatus">Dialling +971 ••• ••381…</div>
+          <div class="wave" id="wave">${'<i></i>'.repeat(11)}</div><div class="status" id="pspeaker" style="height:16px"></div></div>
+        <div><div class="transcript" id="tr"></div><div id="callSummary"></div></div>
+      </div>`;
+    log('📞', 'Calling <b>Al Zeina</b> agent (simulated)', 3);
+    await wait(1600); $('#pstatus').textContent = 'Ringing…';
+    await wait(2000); $('#pulse').style.display = 'none';
+    let secs = 0; clearInterval(phoneTimer); const timer = phoneTimer = setInterval(()=>{ if(!paused){ secs++; const el = document.getElementById('pstatus'); if(el) el.textContent = `${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`; } }, 1000/speed);
+    const lines = [
+      ['agent', "Hi, this is Leah, an AI assistant from LeaseMatch calling for a tenant named Sara. It's about your Dubizzle ad for the 2-bed in Al Zeina. Do you have two minutes?"],
+      ['callee', 'Sure. An AI, okay! Yes, the 2-bed is available.'],
+      ['agent', 'Great. Sara has a cat. Is the building pet friendly, and does the unit come with parking?'],
+      ['callee', "Sorry, the building doesn't allow pets. One parking space though, and chiller is free."],
+      ['agent', "Thanks, that's really helpful. A pet-friendly home is a must for her, so I'll let her know. Could I keep your number in case a pet-friendly unit comes up?"],
+      ['callee', 'Of course, I list on Al Raha Beach all the time. Send me her requirements by WhatsApp.'],
+      ['agent', 'Will do. Thank you for your time!'],
+    ];
+    const bars = [...document.querySelectorAll('#wave i')];
+    for(const [who, text] of lines){
+      $('#pspeaker').textContent = who === 'agent' ? 'Agent speaking' : 'Agent R. Kapoor speaking';
+      const el = document.createElement('div'); el.className = `tline ${who}`; $('#tr').appendChild(el);
+      const anim = setInterval(()=>bars.forEach((b,i)=>{ b.style.height = (15 + Math.random()*85) + '%'; b.style.background = who==='agent' ? '#d4ac63' : '#9db6e4'; }), 150);
+      try { await type(el, text, 80); } finally { clearInterval(anim); }
+      bars.forEach(b=>b.style.height='15%');
+      $('#tr').scrollTop = $('#tr').scrollHeight;
+      await wait(450);
+    }
+    clearInterval(timer);
+    $('#pspeaker').textContent = ''; $('#pstatus').textContent = 'Call ended';
+    $('#callSummary').innerHTML = `<div class="agent-note fade-in" style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-soft-ink);font-size:13px"><b>Call summary, saved to the call log:</b> Available, 1 parking space, chiller free, <b>no pets allowed</b>, so it fails a must-have. Agent's contact kept for future pet-friendly units.</div>`;
+    log('📝', 'Call logged: Al Zeina <b>doesn\'t allow pets</b>. Ruled out', 2);
+    await wait(1600);
+  }},
+
+  { name:'In-app chat', run: async () => {
+    stage.innerHTML = head('Step 7 · In-app chat', 'Moving the hot lead into LeaseMatch', 'Verified owner · tenant approves each offer') + `
+      <div class="chat-wrap">
+        <div class="chat">
+          <div class="chat-top"><div class="av" style="background:var(--portal-b);width:32px;height:32px;font-size:14px">K</div>
+            <div style="flex:1"><b style="font-size:13.5px">Al Bandar 2BR · Khalid (owner)</b><div class="faint" style="font-size:11.5px">Agent (AI) · owner · ${tenant.name} can read along</div></div>
+            <span class="badge" id="verified" style="display:none">✓ Verified owner</span></div>
+          <div class="chat-body" id="cb"></div>
+        </div>
+        <div class="card" style="box-shadow:none">
+          <div class="panel-h"><h3>Deal terms</h3><span class="badge warn" id="dealState">Negotiating</span></div>
+          <div class="deal">
+            <div class="row"><span class="muted">Rent / yr</span><span class="v" id="dRent">${money(118000)}</span></div>
+            <div class="row"><span class="muted">Cheques</span><span class="v" id="dCheq">1–2</span></div>
+            <div class="row"><span class="muted">Pets</span><span class="v" id="dPets">Cats OK</span></div>
+            <div class="row"><span class="muted">Move-in</span><span class="v" id="dMove">TBC</span></div>
+            <div class="row"><span class="muted">Viewing</span><span class="v" id="dView">TBC</span></div>
+          </div>
+        </div>
+      </div>`;
+    const cb = $('#cb');
+    const add = (cls, name, html) => { const d=document.createElement('div'); d.className='msg '+cls; d.innerHTML = name ? `<div class="n">${name}</div>${html}` : html; cb.appendChild(d); cb.scrollTop = cb.scrollHeight; return d; };
+    const typing = async (who, ms=1100) => { const t = add('system typing', '', `${who} is typing…`); await wait(ms); t.remove(); };
+    add('system','', 'Agent sent Khalid a LeaseMatch invite link through Dubizzle chat');
+    log('🔗', 'Invited the Al Bandar owner to a <b>LeaseMatch chat</b>', 10);
+    await wait(1200);
+    add('system','', 'Khalid joined · uploaded title deed · ownership verified ✓');
+    $('#verified').style.display = '';
+    log('🛡️', 'Owner identity & <b>title deed verified</b> on LeaseMatch', 25);
+    await wait(900);
+    const script = [
+      ['agent','Agent (AI)', "Thanks for joining, Khalid. As a reminder, I'm an AI assistant for Sara. She has documents ready and wants a 12-month lease from 1 November. Your ad lists 118k. Would you consider 112k on 4 cheques? Similar 2-beds in Al Bandar are listed at 108–116k."],
+      ['owner','Khalid (owner)', "112k is low. It's freshly painted and comes with two parking spaces. 116k on 4 cheques, or 112k if she pays in 2 cheques."],
+    ];
+    for(const [cls,n,t] of script){ await typing(cls==='agent'?'Agent':'Khalid'); add(cls,n,t); await wait(900); }
+    log('💬', 'Owner countered: <b>116k / 4 cheques</b> or <b>112k / 2 cheques</b>', 15);
+    await wait(500);
+    const a = add('approval','Needs Sara\'s approval', `<b>Counter-offer:</b> accept <b>AED 114,000 on 4 cheques</b>, with the cat clause written into the lease and move-in on 1 Nov? <div style="margin-top:8px;display:flex;gap:8px"><span class="badge warn" id="ap2">Waiting for ${tenant.first}…</span></div>`);
+    approval('Offer AED 114k / 4 cheques + cat clause', 'wait');
+    log('🙋', `Asked ${tenant.first}: offer <b>114k / 4 cheques</b>?`, 2);
+    await wait(2400);
+    $('#ap2').className = 'badge'; $('#ap2').textContent = `Approved by ${tenant.first} in the app`;
+    approval('Offer AED 114k / 4 cheques + cat clause', 'ok');
+    log('✅', `${tenant.first} approved the counter-offer`, 9);
+    await wait(700);
+    const script2 = [
+      ['agent','Agent (AI)', "Sara can do 114k on 4 cheques if a clause allowing one cat goes into the lease. She'd move in on 1 November."],
+      ['owner','Khalid (owner)', 'Deal at 114k, 4 cheques, cat clause is fine. Can she view on Wednesday at 6:30pm?'],
+      ['agent','Agent (AI)', "Wednesday at 6:30pm works, it's on Sara's calendar. I'll prepare the draft lease in LeaseMatch for both of you to review after the viewing. Nothing gets signed until you've both seen it."],
+    ];
+    for(const [cls,n,t] of script2){ await typing(cls==='agent'?'Agent':'Khalid'); add(cls,n,t); await wait(800); }
+    $('#dRent').innerHTML = `<span class="strike">${money(118000)}</span>${money(114000)}`;
+    $('#dCheq').textContent = '4'; $('#dPets').textContent = 'Cat clause ✓'; $('#dMove').textContent = '1 Nov'; $('#dView').textContent = 'Wed 18:30';
+    $('#dealState').className = 'badge'; $('#dealState').textContent = 'Agreed in principle';
+    add('system','', 'Viewing booked · draft lease created (pending both parties\' review)');
+    log('📅', 'Viewing booked <b>Wed 18:30</b>. Draft lease prepared', 4);
+    await wait(1800);
+  }},
+
+  { name:'Outcome', run: async () => {
+    stage.innerHTML = head('Step 8 · Outcome', 'What the tenant gets back', 'About 1 day of agent work') + `
+      <div class="outcome">
+        <div class="kpi fade-in"><div class="l">Ads screened</div><div class="v">6</div></div>
+        <div class="kpi fade-in"><div class="l">Landlords contacted</div><div class="v">3</div></div>
+        <div class="kpi fade-in"><div class="l">Rent negotiated</div><div class="v" style="color:var(--good)">−4k</div></div>
+        <div class="kpi fade-in"><div class="l">Tenant time spent</div><div class="v">~4m</div></div>
+      </div>
+      <div class="card fade-in" style="padding:16px 18px;box-shadow:none">
+        <h3 style="font-size:17px;margin-bottom:8px">Al Bandar 2BR, Al Raha Beach: viewing Wednesday 18:30</h3>
+        <ul class="steps muted" style="margin:0;padding-left:18px">
+          <li><b style="color:var(--ink)">AED 114,000/yr on 4 cheques</b>, AED 4,000 below asking and AED 26,000 under budget.</li>
+          <li>Owner verified through title deed upload. Cat clause agreed in writing in the LeaseMatch thread.</li>
+          <li>Two leads ruled out on the pets must-have (one by email, one by phone), so Sara didn't spend viewings on them.</li>
+          <li>Next in LeaseMatch: viewing, then lease review, e-signature, secure payment and verified key handover.</li>
+        </ul>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn primary" onclick="restart()">↺ Watch again</button>
+        <a class="btn" href="/dashboard/market" style="text-decoration:none">Try market search in the app →</a>
+        <a class="btn" href="/demos" style="text-decoration:none">All demos</a>
+      </div>
+      <p class="note">This is a scripted simulation with fictional people, listings and conversations. The portal frames are simplified stand-ins, not the real sites. In the app today, search runs on a hosted search API, emails go out only when the tenant presses send, and calls are simulated.</p>`;
+    log('🏁', 'Handed back to Sara: <b>viewing booked, 114k agreed in principle</b>', 3);
+  }},
+];
+
+/* summaries used to backfill the log when jumping ahead */
+const skipLog = [
+  ['🧠','Brief: <b>2BR · Reem/Raha · ≤140k · pets</b>', 5],
+  ['📥','Found 6 ads on Bayut & Dubizzle (links verified)', 8],
+  ['✅','Sara approved outreach to 3 ads', 12],
+  ['✉️','Contacted 3 advertisers (form, chat, email)', 10],
+  ['🟢','Al Bandar owner replied: available, pets OK', 120],
+  ['📞','Al Zeina call: no pets. Ruled out', 10],
+  ['📅','Viewing booked, 114k agreed in principle', 70],
+];
+
+/* ---------------- chrome ---------------- */
+function renderChapters(){
+  $('#chapters').innerHTML = scenes.map((s,i)=>`<button class="chap ${i<chapter?'done':i===chapter?'now':''}" data-i="${i}"><span class="n">${i<chapter?'✓':i+1}</span>${s.name}</button>`).join('');
+}
+$('#chapters').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if(b) runFrom(Number(b.dataset.i)); });
+
+async function runFrom(i){
+  runId++;
+  clearInterval(phoneTimer);
+  const id = runId;
+  paused = false; setPlayLabel();
+  clockMin = 9*60; day = 0; renderClock();
+  $('#log').innerHTML = ''; approvals.length = 0; $('#approvals').innerHTML = '<div class="faint" style="font-size:12.5px">None yet.</div>';
+  for(let k=0;k<i;k++){ const [ic,t,m] = skipLog[k]; log(ic,t,m); }
+  if(i>0){ approval('Search Bayut & Dubizzle on my behalf','ok'); }
+  if(i>2){ approval('Contact 3 shortlisted advertisers','ok'); }
+  if(i>6){ approval('Offer AED 114k / 4 cheques + cat clause','ok'); }
+  for(chapter=i; chapter<scenes.length; chapter++){
+    renderChapters();
+    try { await scenes[chapter].run(); }
+    catch(err){ if(err===CANCEL) return; throw err; }
+    if(id !== runId) return;
+  }
+  chapter = scenes.length - 1; renderChapters();
+}
+function restart(){ runFrom(0); }
+function setPlayLabel(){ $('#playBtn').textContent = paused ? '▶ Play' : '❚❚ Pause'; }
+$('#playBtn').onclick = () => { paused = !paused; setPlayLabel(); };
+$('#nextBtn').onclick = () => runFrom(Math.min(chapter+1, scenes.length-1));
+$('#restartBtn').onclick = restart;
+$('#speed').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if(!b) return; speed = Number(b.dataset.s); document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on', x===b)); });
+document.addEventListener('keydown', e => { if(e.code==='Space' && e.target===document.body){ e.preventDefault(); $('#playBtn').click(); } if(e.key==='ArrowRight') $('#nextBtn').click(); });
+
+runFrom(0);
+</script>
+</body>
+</html>

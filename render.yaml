@@ -1,0 +1,28 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# One Node web service plus a persistent disk for the SQLite database.
+# The disk needs a paid instance type (starter); free instances have no
+# disk and sleep after 15 minutes idle.
+services:
+  - type: web
+    name: hub71ai-leasematchuae
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /
+    disk:
+      name: leasematch-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: LEASEMATCH_DB_PATH
+        value: /var/data/leasematch.db
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.5

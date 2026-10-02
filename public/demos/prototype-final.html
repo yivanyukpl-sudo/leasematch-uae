@@ -1,0 +1,1486 @@
+<!doctype html>
+<title>LeaseMatch</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F4F9;
+    --surface:#FFFFFF;
+    --surface-2:#F0EEF6;
+    --ink:#131A2C;
+    --ink-muted:#5B5F72;
+    --ink-faint:#8B8FA0;
+    --line:#E1DEEA;
+    --line-strong:#CBC7DA;
+    --accent:#0E2A4D;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E7EAF2;
+    --accent-soft-ink:#0E2A4D;
+    --gold:#A8792F;
+    --gold-soft:#F3E9D6;
+    --good:#2F7D4F;
+    --good-soft:#E4F1E7;
+    --warn:#B4791C;
+    --warn-soft:#FBEEDA;
+    --critical:#B23A34;
+    --critical-soft:#F8E4E2;
+    --shadow: 0 1px 2px rgba(19,26,44,.04), 0 6px 20px -8px rgba(19,26,44,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+      --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+      --line:#2A2E3C; --line-strong:#383D4E;
+      --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+      --gold:#D4AC63; --gold-soft:#332A18;
+      --good:#6FBF8B; --good-soft:#1B2F22;
+      --warn:#E0A94C; --warn-soft:#332811;
+      --critical:#E38F89; --critical-soft:#33201E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+    --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+    --line:#2A2E3C; --line-strong:#383D4E;
+    --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+    --gold:#D4AC63; --gold-soft:#332A18;
+    --good:#6FBF8B; --good-soft:#1B2F22;
+    --warn:#E0A94C; --warn-soft:#332811;
+    --critical:#E38F89; --critical-soft:#33201E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', Georgia, serif; text-wrap:balance; margin:0; letter-spacing:-0.01em; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a{color:inherit;}
+  button{font-family:inherit; font-size:inherit; cursor:pointer;}
+  input,textarea,select{font-family:inherit;}
+  ::selection{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* ---------- shell ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; padding:12px 20px;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:11px; cursor:pointer; }
+  .brand .mark{
+    width:32px; height:32px; border:2px solid var(--ink); border-radius:3px;
+    position:relative; flex:none; overflow:hidden;
+  }
+  .brand .mark::before{ content:""; position:absolute; inset:0 50% 0 0; background:var(--accent); }
+  .brand .mark::after{ content:""; position:absolute; inset:0 0 0 50%; background:var(--gold); }
+  .brand .mark span{
+    position:relative; z-index:1; display:flex; align-items:center; justify-content:center;
+    height:100%; font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:#fff;
+    letter-spacing:-0.03em;
+  }
+  .brand .word{ display:flex; flex-direction:column; line-height:1; }
+  .brand .wordmark{ font-family:'Fraunces', serif; font-weight:600; font-size:20px; letter-spacing:-0.01em; }
+  .brand .wordmark .lease{ color:var(--accent); }
+  .brand .wordmark .match{ color:var(--gold); }
+  .brand .tagline{ font-family:'IBM Plex Sans'; font-weight:500; font-size:9.5px; color:var(--ink-faint); letter-spacing:.12em; text-transform:uppercase; margin-top:3px; }
+
+  .mode-switch{ display:flex; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; }
+  .mode-switch button{
+    border:none; background:transparent; color:var(--ink-muted);
+    padding:7px 14px; border-radius:8px; font-weight:600; font-size:13.5px;
+    transition: background .15s, color .15s;
+  }
+  .mode-switch button.active{ background:var(--accent); color:var(--accent-ink); }
+
+  .topbar-right{ display:flex; align-items:center; gap:10px; }
+  .demo-tag{
+    font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); border:1px solid var(--line); border-radius:6px; padding:4px 8px;
+    white-space:nowrap;
+  }
+
+  .shell{ display:flex; min-height:calc(100vh - 53px); }
+
+  /* ---------- provider sidebar ---------- */
+  .sidebar{
+    width:216px; flex:none; border-right:1px solid var(--line); background:var(--surface);
+    padding:18px 12px; display:flex; flex-direction:column; gap:2px;
+  }
+  .sidebar .navlabel{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600; padding:8px 10px 6px; }
+  .sidebar button{
+    display:flex; align-items:center; gap:10px; text-align:left; width:100%;
+    border:none; background:transparent; color:var(--ink-muted);
+    padding:9px 10px; border-radius:8px; font-weight:500; font-size:14px;
+  }
+  .sidebar button.active{ background:var(--accent-soft); color:var(--accent-soft-ink); font-weight:600; }
+  .sidebar button:hover:not(.active){ background:var(--surface-2); }
+  .sidebar .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none; }
+  .role-chip{
+    margin:4px 10px 14px; padding:9px 10px; border-radius:9px; background:var(--gold-soft); color:var(--gold);
+    font-size:11.5px; font-weight:600; line-height:1.4;
+  }
+  .role-chip .fee{ display:block; font-weight:500; opacity:.85; margin-top:2px; }
+
+  main{ flex:1; min-width:0; padding:28px 32px 64px; max-width:1180px; }
+  .applicant-main{ max-width:960px; margin:0 auto; padding:32px 24px 72px; }
+  .narrow-main{ max-width:640px; margin:0 auto; padding:32px 24px 72px; }
+
+  /* ---------- generic bits ---------- */
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:28px; }
+  .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow); }
+  .kpi .label{ font-size:12px; color:var(--ink-muted); font-weight:500; margin-bottom:8px; }
+  .kpi .value{ font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .kpi .delta{ font-size:12px; margin-top:6px; font-weight:600; }
+  .kpi .delta.good{ color:var(--good); } .kpi .delta.warn{ color:var(--warn); }
+
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .section-head h2{ font-size:20px; font-weight:600; }
+  .section-head .sub{ color:var(--ink-muted); font-size:13.5px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  thead th{ text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+  tbody td{ padding:13px 14px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr{ cursor:pointer; transition:background .12s; }
+  tbody tr:hover{ background:var(--surface-2); }
+  .table-wrap{ overflow-x:auto; }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .pill.vacant{ background:var(--critical-soft); color:var(--critical); }
+  .pill.occupied{ background:var(--good-soft); color:var(--good); }
+  .pill.offer{ background:var(--warn-soft); color:var(--warn); }
+  .pill.verified{ background:var(--gold-soft); color:var(--gold); }
+  .pill.accepted{ background:var(--good-soft); color:var(--good); }
+  .pill.declined{ background:var(--critical-soft); color:var(--critical); }
+  .pill.review{ background:var(--warn-soft); color:var(--warn); }
+  .pill.clarify{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+  .pill.pending{ background:var(--surface-2); color:var(--ink-muted); border:1px solid var(--line); }
+
+  .btn{ border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); padding:8px 14px; border-radius:9px; font-weight:600; font-size:13.5px; transition:background .12s,border-color .12s; }
+  .btn:hover{ background:var(--surface-2); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .btn.primary:hover{ filter:brightness(1.06); }
+  .btn.ghost{ border-color:transparent; background:transparent; }
+  .btn.ghost:hover{ background:var(--surface-2); }
+  .btn.sm{ padding:6px 11px; font-size:12.5px; border-radius:7px; }
+  .btn.lg{ padding:12px 20px; font-size:15px; border-radius:11px; }
+  .btn.danger{ color:var(--critical); }
+  .btn:disabled{ opacity:.45; cursor:default; }
+  .btn.block{ width:100%; }
+
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+
+  /* ---------- forms ---------- */
+  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; padding:22px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:6px; }
+  .field select, .field input, .field textarea{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line-strong);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:14px;
+  }
+  .field textarea{ resize:vertical; min-height:80px; }
+  .field.span2{ grid-column:span 2; }
+  .form-actions{ padding:0 22px 22px; display:flex; justify-content:flex-end; gap:10px; }
+  .field-eyebrow{ font-size:11.5px; font-weight:600; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; display:block; }
+
+  .step-section{ margin-bottom:26px; }
+  .step-section .sh{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+  .step-section .sh .bar{ width:3px; height:16px; background:var(--gold); border-radius:2px; }
+  .step-section .sh h3{ font-size:15.5px; font-weight:600; }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-muted);
+    padding:8px 14px; border-radius:9px; font-weight:600; font-size:13px; transition:.12s;
+  }
+  .chip.on{ background:var(--gold); border-color:var(--gold); color:#fff; }
+  .chip.rm{ display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .toggle-row{ display:flex; gap:0; border:1px solid var(--line-strong); border-radius:9px; overflow:hidden; width:fit-content; }
+  .toggle-row button{ border:none; background:var(--surface-2); color:var(--ink-muted); padding:9px 18px; font-weight:600; font-size:13.5px; }
+  .toggle-row button.on{ background:var(--ink); color:var(--bg); }
+
+  .stepper-count{ display:flex; align-items:center; gap:16px; }
+  .stepper-count button{ width:34px; height:34px; border-radius:8px; border:1px solid var(--line-strong); background:var(--surface); font-size:17px; font-weight:600; }
+  .stepper-count .n{ font-family:'IBM Plex Mono'; font-size:18px; font-weight:600; min-width:20px; text-align:center; }
+
+  .provider-pref{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .provider-pref button{
+    border:1px solid var(--line-strong); background:var(--surface); border-radius:11px; padding:16px 12px; text-align:left;
+    font-weight:600; font-size:13.5px; color:var(--ink-muted);
+  }
+  .provider-pref button.on{ border-color:var(--gold); background:var(--gold-soft); color:var(--ink); }
+  .provider-pref button .icon{ font-size:18px; margin-bottom:6px; display:block; }
+
+  .check-inline{ display:flex; align-items:flex-start; gap:9px; font-size:13px; color:var(--ink-muted); }
+  .check-inline input{ margin-top:3px; }
+
+  .dropzone{
+    border:1.5px dashed var(--line-strong); border-radius:12px; padding:26px; text-align:center;
+    background:var(--surface-2); cursor:pointer; transition:.12s;
+  }
+  .dropzone:hover{ border-color:var(--gold); }
+  .dropzone.filled{ border-style:solid; border-color:var(--good); background:var(--good-soft); }
+  .dropzone .dz-icon{ font-size:24px; margin-bottom:8px; }
+  .dropzone .dz-label{ font-weight:600; font-size:14px; }
+  .dropzone .dz-sub{ font-size:12px; color:var(--ink-muted); margin-top:3px; }
+
+  .sig-pad{
+    border:1.5px dashed var(--line-strong); border-radius:12px; height:100px; position:relative;
+    background:repeating-linear-gradient(var(--surface-2),var(--surface-2) 99%, var(--line) 100%);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.12s;
+  }
+  .sig-pad.signed{ border-style:solid; border-color:var(--gold); }
+  .sig-pad .sig-hint{ color:var(--ink-faint); font-size:13px; }
+  .sig-pad .sig-mark{ font-family:'Fraunces'; font-style:italic; font-size:26px; color:var(--gold); }
+
+  .stepper{ display:flex; gap:8px; margin-bottom:22px; }
+  .stepper .step{ flex:1; height:4px; border-radius:99px; background:var(--line); }
+  .stepper .step.done{ background:var(--accent); }
+  .step-label{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+
+  /* ---------- listings ---------- */
+  .hero{ margin-bottom:26px; }
+  .hero h1{ font-size:32px; margin-bottom:8px; }
+  .hero p{ color:var(--ink-muted); font-size:15px; max-width:52ch; }
+
+  .listings-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; margin-top:18px; }
+  .listing-card{ overflow:hidden; cursor:pointer; transition:transform .14s, box-shadow .14s; }
+  .listing-card:hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(19,26,44,.06), 0 14px 28px -10px rgba(19,26,44,.22); }
+  .listing-photo{ height:140px; position:relative; }
+  .listing-photo .price-tag{
+    position:absolute; bottom:10px; left:10px; background:rgba(19,26,44,.78); color:#fff;
+    padding:5px 10px; border-radius:8px; font-family:'IBM Plex Mono'; font-size:13px; font-weight:600;
+  }
+  .match-badge{
+    position:absolute; top:10px; right:10px; background:var(--gold); color:#fff;
+    padding:4px 9px; border-radius:99px; font-family:'IBM Plex Mono'; font-size:11.5px; font-weight:600;
+  }
+  .listing-body{ padding:14px 16px 16px; }
+  .listing-body h3{ font-size:16px; font-weight:600; margin-bottom:3px; }
+  .listing-loc{ color:var(--ink-muted); font-size:13px; margin-bottom:10px; }
+  .listing-specs{ display:flex; gap:10px; font-size:12.5px; color:var(--ink-muted); }
+
+  .detail-photo{ height:260px; border-radius:14px; margin-bottom:20px; }
+  .detail-grid{ display:grid; grid-template-columns:1.6fr 1fr; gap:28px; align-items:start; }
+  .amenity-list{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .amenity-list span{ background:var(--surface-2); border:1px solid var(--line); border-radius:99px; padding:5px 11px; font-size:12.5px; color:var(--ink-muted); }
+  .price-box{ padding:20px; }
+  .price-box .amt{ font-family:'IBM Plex Mono'; font-size:28px; font-weight:600; }
+  .price-box .per{ color:var(--ink-muted); font-size:13px; margin-top:2px; }
+
+  .check-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border:1px solid var(--line); border-radius:11px; margin-bottom:10px; background:var(--surface); }
+  .check-row .cr-label{ font-weight:600; font-size:14px; }
+  .check-row .cr-sub{ font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+
+  .app-list-item{ display:flex; gap:14px; padding:16px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+  .app-thumb{ width:56px; height:56px; border-radius:9px; flex:none; }
+  .app-info{ flex:1; min-width:160px; }
+  .app-info h4{ font-family:'IBM Plex Sans'; font-size:14.5px; font-weight:600; margin:0 0 2px; }
+  .app-info .meta{ font-size:12.5px; color:var(--ink-muted); }
+  .app-actions{ display:flex; align-items:center; gap:8px; }
+
+  .applicant-card{ display:flex; gap:14px; padding:16px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:12px; }
+  .avatar{ width:44px; height:44px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Fraunces'; font-size:16px; color:#fff; background:linear-gradient(155deg, var(--accent), var(--gold)); }
+  .applicant-info{ flex:1; min-width:0; }
+  .applicant-info .name-row{ display:flex; align-items:center; gap:8px; margin-bottom:3px; flex-wrap:wrap; }
+  .applicant-info .name-row h4{ font-family:'IBM Plex Sans'; font-size:15px; font-weight:600; }
+  .applicant-facts{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-muted); margin-top:6px; }
+  .applicant-actions{ display:flex; gap:8px; flex:none; align-self:center; }
+
+  .empty{ text-align:center; padding:48px 20px; color:var(--ink-muted); }
+  .empty .glyph{ font-size:28px; margin-bottom:10px; }
+
+  .breadcrumb{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-muted); margin-bottom:16px; }
+  .breadcrumb button{ background:none; border:none; color:var(--accent); font-weight:600; padding:0; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px);
+    background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:10px;
+    font-size:13.5px; font-weight:500; box-shadow:0 10px 30px -8px rgba(0,0,0,.4);
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:100;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- notifications ---------- */
+  .notif-row{ display:flex; gap:12px; padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:10px; }
+  .notif-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin-top:6px; flex:none; }
+  .notif-dot.read{ background:var(--line-strong); }
+  .notif-row .body{ flex:1; }
+  .notif-row .txt{ font-size:14px; }
+  .notif-row .time{ font-size:12px; color:var(--ink-faint); margin-top:3px; }
+
+  /* ---------- lease flow ---------- */
+  .lease-summary-row{ display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .lease-summary-row:last-child{ border-bottom:none; }
+  .lease-summary-row .k{ color:var(--ink-muted); }
+  .lease-summary-row .v{ font-weight:600; font-family:'IBM Plex Mono'; }
+
+  .progress-bar{ height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
+  .progress-bar .fill{ height:100%; background:linear-gradient(90deg, var(--gold), var(--accent)); border-radius:99px; transition:width .5s ease; }
+
+  /* ---------- auth / landing ---------- */
+  .auth-wrap{ min-height:calc(100vh - 53px); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+  .landing-wrap{ min-height:calc(100vh - 53px); display:flex; flex-direction:column; align-items:center; padding:56px 20px 40px; text-align:center; }
+  .landing-hero{
+    width:100%; max-width:640px; height:280px; border-radius:20px; position:relative; overflow:hidden;
+    background:linear-gradient(155deg, var(--accent) 0%, #1c3d66 55%, var(--gold) 130%);
+    display:flex; align-items:flex-end; padding:20px; margin-bottom:36px;
+  }
+  .landing-hero .badge{
+    background:rgba(255,255,255,.94); color:var(--ink); border-radius:11px; padding:10px 14px; text-align:left;
+    font-size:12.5px; max-width:260px; box-shadow:var(--shadow);
+  }
+  .landing-hero .badge .tag{ color:var(--gold); font-weight:700; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:3px; }
+  .landing-wrap h1{ font-size:34px; max-width:20ch; margin-bottom:10px; }
+  .landing-wrap h1 em{ color:var(--gold); font-style:italic; }
+  .landing-wrap p{ color:var(--ink-muted); max-width:44ch; margin-bottom:26px; font-size:15px; }
+  .landing-actions{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; }
+  .skip-link{ margin-top:30px; font-size:12.5px; color:var(--ink-faint); background:none; border:none; text-decoration:underline; text-underline-offset:3px; }
+
+  .auth-card{ width:100%; max-width:400px; padding:30px 28px; text-align:center; }
+  .auth-card .otp-row{ display:flex; gap:8px; justify-content:center; margin:24px 0 18px; }
+  .auth-card .otp-row input{
+    width:42px; height:52px; text-align:center; font-size:19px; font-family:'IBM Plex Mono'; font-weight:600;
+    border:1px solid var(--line-strong); border-radius:9px; background:var(--surface-2); color:var(--ink);
+  }
+  .auth-card .resend{ font-size:12.5px; color:var(--ink-faint); margin-bottom:20px; }
+  .auth-card .resend a{ color:var(--gold); font-weight:600; text-decoration:none; }
+  .auth-field{ text-align:left; margin-bottom:14px; }
+  .auth-field label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--gold); margin-bottom:6px; }
+  .auth-field input{ width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--ink); font-size:14px; }
+  .auth-divider{ display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--ink-faint); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; }
+  .auth-divider::before,.auth-divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+
+  .role-card{
+    display:flex; gap:14px; align-items:flex-start; text-align:left; width:100%;
+    border:1.5px solid var(--line); border-radius:13px; padding:16px; background:var(--surface); margin-bottom:12px;
+  }
+  .role-card.on{ border-color:var(--gold); background:var(--gold-soft); }
+  .role-card .ricon{ width:38px; height:38px; border-radius:9px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:17px; flex:none; }
+  .role-card.on .ricon{ background:var(--gold); color:#fff; }
+  .role-card .rtitle{ font-weight:700; font-size:15px; }
+  .role-card .rsub{ font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+  .role-card .rcheck{ margin-left:auto; width:22px; height:22px; border-radius:50%; background:var(--gold); color:#fff; display:none; align-items:center; justify-content:center; font-size:12px; flex:none; }
+  .role-card.on .rcheck{ display:flex; }
+
+  @media (max-width: 760px){
+    .sidebar{ display:none; }
+    main{ padding:20px 16px 48px; }
+    .detail-grid{ grid-template-columns:1fr; }
+    .mode-switch button{ padding:7px 10px; font-size:12.5px; }
+    .landing-hero{ height:220px; }
+  }
+</style>
+
+<div class="topbar">
+  <div class="brand" id="brandHome">
+    <div class="mark"><span>LM</span></div>
+    <div class="word">
+      <div class="wordmark"><span class="lease">Lease</span><span class="match">Match</span></div>
+      <div class="tagline">Trusted Leasing &middot; Prototype</div>
+    </div>
+  </div>
+  <div class="mode-switch" id="modeSwitch">
+    <button data-mode="applicant">I'm looking for a home</button>
+    <button data-mode="provider">I manage properties</button>
+  </div>
+  <div class="topbar-right"><div class="demo-tag">Working demo &middot; sample data</div></div>
+</div>
+
+<div class="shell" id="shell"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= mock data ================= */
+const PHOTO = (i, h=140) => {
+  const hues = [172,150,205,28,190,340,90,255];
+  const h1 = hues[i % hues.length], h2 = hues[(i+3) % hues.length];
+  return `background:linear-gradient(135deg, hsl(${h1} 38% 78%), hsl(${h2} 30% 62%)); height:${h}px; border-radius:12px;`;
+};
+
+const properties = [
+  {id:'p1', title:'1BR in Marina Promenade', loc:'Dubai Marina', type:'apartment', price:95000, period:'yr', beds:1, baths:2, sqft:820, furnished:'furnished', provider:'Marina Property Management', daysVacant:41,
+   amenities:['Pool','Gym','Covered parking','Marina view','24/7 security'],
+   desc:'A bright one-bedroom on the 14th floor with unobstructed marina views, recently renovated kitchen, and access to the building\'s waterfront promenade.'},
+  {id:'p2', title:'2BR Townhouse, Cluster C', loc:'JVC', type:'townhouse', price:78000, period:'yr', beds:2, baths:3, sqft:1450, furnished:'unfurnished', provider:'Meadows Estates', daysVacant:12,
+   amenities:['Private garden','Community pool','Maid\'s room','Covered parking'],
+   desc:'Corner-unit townhouse with a private garden, close to Circle Mall. Landlord open to a light renovation allowance for the right tenant.'},
+  {id:'p3', title:'Studio, Business Bay Tower', loc:'Business Bay', type:'studio', price:58000, period:'yr', beds:0, baths:1, sqft:480, furnished:'furnished', provider:'Meadows Estates', daysVacant:67,
+   amenities:['Gym','Pool','Canal view','Metro access'],
+   desc:'Compact, efficient studio five minutes\' walk from Business Bay metro. Fully furnished, utilities not included.'},
+  {id:'p4', title:'3BR Villa, District 7', loc:'Al Barsha', type:'villa', price:165000, period:'yr', beds:3, baths:4, sqft:2600, furnished:'unfurnished', provider:'Marina Property Management', daysVacant:5,
+   amenities:['Private pool','Garden','Maid\'s room','Driver\'s room','Covered parking x2'],
+   desc:'Detached villa on a quiet cul-de-sac, recently repainted. Close to two international schools.'},
+  {id:'p5', title:'1BR in Burj Views', loc:'Downtown Dubai', type:'apartment', price:110000, period:'yr', beds:1, baths:1, sqft:750, furnished:'furnished', provider:'Skyline Leasing Co.', daysVacant:23,
+   amenities:['Burj Khalifa view','Pool','Gym','Concierge'],
+   desc:'High-floor unit with a direct Burj Khalifa view. Building fees included in rent.'},
+  {id:'p6', title:'Convertible Studio, Al Wasl', loc:'Jumeirah', type:'convertible studio', price:64000, period:'yr', beds:0, baths:1, sqft:520, furnished:'unfurnished', provider:'Skyline Leasing Co.', daysVacant:88,
+   amenities:['Pool','Gym','Pet friendly'],
+   desc:'Partitioned studio with a separate sleeping area, in a quiet low-rise on Al Wasl Road. Landlord is motivated — unit has been vacant since June.'},
+];
+
+const applicantNames = ['Amira K.','David O.','Fatima R.','James T.','Layla H.','Noah S.','Sara M.','Yusuf A.'];
+const occupations = ['Marketing professional','Software engineer','Healthcare professional','Finance professional','Consultant','Operations manager','Educator','Design professional'];
+const areasList = ['Dubai Marina','JVC','Business Bay','Al Barsha','Downtown Dubai','Jumeirah','Palm Jumeirah','Arabian Ranches'];
+const propertyTypesList = ['apartment','shared apartment','house','townhouse','villa','penthouse','studio','convertible studio'];
+
+function makeApplicants(propertyId, n, seedOffset){
+  const list = [];
+  for(let i=0;i<n;i++){
+    const idx = (seedOffset+i) % applicantNames.length;
+    const incomeBand = [22000,28000,34000,41000,52000][ (seedOffset+i) % 5 ];
+    list.push({
+      id: propertyId+'-a'+i,
+      name: applicantNames[idx],
+      occupation: occupations[idx],
+      income: incomeBand,
+      verified: (i % 3 !== 0),
+      moveIn: ['This month','Within 2 weeks','Next month','Flexible'][(seedOffset+i)%4],
+      status: 'pending',
+      propertyId
+    });
+  }
+  return list;
+}
+let applicants = [];
+properties.forEach((p, i) => { applicants = applicants.concat(makeApplicants(p.id, 2 + (i%3), i*2)); });
+
+const tenantSeekers = [
+  {id:'ts1', name:'Karim B.', occupation:'Finance professional', budget:100000, area:'Downtown Dubai', moveIn:'Within 2 weeks', verified:true},
+  {id:'ts2', name:'Elena V.', occupation:'Design professional', budget:70000, area:'JVC', moveIn:'Flexible', verified:true},
+  {id:'ts3', name:'Omar S.', occupation:'Software engineer', budget:120000, area:'Dubai Marina', moveIn:'This month', verified:false},
+  {id:'ts4', name:'Priya N.', occupation:'Healthcare professional', budget:85000, area:'Business Bay', moveIn:'Next month', verified:true},
+  {id:'ts5', name:'Liam F.', occupation:'Consultant', budget:150000, area:'Al Barsha', moveIn:'Flexible', verified:true},
+];
+
+// leases: propertyId -> shared deal state, driving both the tenant lease flow and the provider Leases tab
+const leases = {};
+function ensureLease(propertyId, tenantName){
+  if(!leases[propertyId]) leases[propertyId] = { stage:'pending_draft', tenantName, signed:false, paid:false, receiptUploaded:false };
+  return leases[propertyId];
+}
+const leaseStageInfo = {
+  pending_draft:      { tenantLabel:'Waiting on provider — drafting agreement', providerLabel:'Draft the lease agreement', providerAction:'draft' },
+  awaiting_signature:  { tenantLabel:'Ready for your signature', providerLabel:'Waiting on tenant signature', providerAction:null },
+  awaiting_finalize:  { tenantLabel:'Waiting on provider — finalizing agreement', providerLabel:'Signed — review & finalize', providerAction:'finalize' },
+  awaiting_payment:   { tenantLabel:'Ready for payment', providerLabel:'Waiting on tenant payment', providerAction:null },
+  awaiting_confirmation:{ tenantLabel:'Waiting on provider to confirm receipt', providerLabel:'Confirm receipt of payment', providerAction:'confirm' },
+  finalized:          { tenantLabel:'Lease finalized', providerLabel:'Completed', providerAction:null },
+};
+
+const providerDocuments = [
+  {name:'Ownership Deed — Marina Promenade Unit 1402.pdf', date:'2 Jan 2026', status:'verified'},
+  {name:'Trade License — Marina Property Management.pdf', date:'14 Nov 2025', status:'verified'},
+  {name:'Lease Agreement — JVC Cluster C, draft.pdf', date:'28 Aug 2026', status:'pending'},
+  {name:'RERA Broker Card.pdf', date:'6 Mar 2026', status:'verified'},
+];
+
+function makeNotifications(kind){
+  if(kind==='applicant') return [
+    {txt:'Your application for "1BR in Marina Promenade" was accepted — continue to lease signing.', time:'2 hours ago', read:false},
+    {txt:'3 new listings match your saved search in Business Bay.', time:'Yesterday', read:false},
+    {txt:'Your identity verification is complete.', time:'2 days ago', read:true},
+    {txt:'Meadows Estates requested clarification on your application.', time:'4 days ago', read:true},
+  ];
+  return [
+    {txt:'New verified applicant for "Studio, Business Bay Tower."', time:'40 minutes ago', read:false},
+    {txt:'"1BR in Burj Views" has been vacant for 23 days — consider adjusting price.', time:'3 hours ago', read:false},
+    {txt:'Lease agreement signed for Unit 1402, Marina Promenade.', time:'Yesterday', read:true},
+    {txt:'Payment received: AED 27,500 — Cluster C Townhouse.', time:'3 days ago', read:true},
+  ];
+}
+
+/* ================= state ================= */
+const emptyProfile = ()=>({
+  propertyTypes:[], sqft:'', rooms:2, locations:[], year:'', furnishing:'unfurnished',
+  providerPref:'', renovation:'', renovationHandling:'', utilities:['gas','sanitation','electricity','water'],
+  amenities:[], consent:false,
+  leaseType:'yearly', budget:'', immigration:'resident', occupation:'employed',
+  idNumber:'', idUploaded:false, certified:false, signed:false,
+});
+
+const state = {
+  screen: 'landing', // landing | signup | otp | role | app
+  pendingRole: 'tenant',
+  mode: 'applicant',
+  providerRole: 'owner', // owner | broker | pm
+  applicant: {
+    view:'step1', profile: emptyProfile(), matches:[], selectedProperty:null,
+    leaseAppId:null, notifications: makeNotifications('applicant'),
+  },
+  provider: { view:'overview', selectedProperty:null, notifications: makeNotifications('provider') },
+};
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function money(n){ return 'AED ' + Number(n).toLocaleString('en-US'); }
+function cap(s){ return s ? s[0].toUpperCase()+s.slice(1) : s; }
+
+/* ================= topbar ================= */
+document.getElementById('modeSwitch').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-mode]');
+  if(!btn) return;
+  state.mode = btn.dataset.mode;
+  render();
+});
+document.getElementById('brandHome').addEventListener('click', ()=>{
+  state.screen = 'landing';
+  render();
+});
+
+/* ================= auth / landing ================= */
+function renderLanding(){
+  return `
+  <div class="landing-wrap">
+    <div class="landing-hero">
+      <div class="badge"><span class="tag">AI matching live</span>Analyzing ${properties.length * 400}+ premium listings across the UAE for your profile&hellip;</div>
+    </div>
+    <h1>Find Your Perfect Lease, <em>Smarter</em></h1>
+    <p>AI-powered matching between tenants and property providers &mdash; verified listings, verified people, one platform.</p>
+    <div class="landing-actions">
+      <button class="btn primary lg block" data-auth="signup">Get Started &rarr;</button>
+      <button class="btn lg block" data-auth="signin">Sign In to Account</button>
+    </div>
+    <button class="skip-link" data-auth="skip">Skip intro &mdash; explore as guest</button>
+  </div>`;
+}
+
+function renderSignup(){
+  return `
+  <div class="auth-wrap"><div class="card auth-card">
+    <div class="wordmark" style="font-size:24px; margin-bottom:6px;"><span class="lease" style="color:var(--accent)">Lease</span><span class="match" style="color:var(--gold)">Match</span></div>
+    <h2 style="font-size:21px; margin-bottom:6px;">Create Your Account</h2>
+    <p style="color:var(--ink-muted); font-size:13.5px; margin-bottom:22px;">Join the LeaseMatch network of tenants and property providers.</p>
+    <div class="auth-field"><label>Email or phone number</label><input type="text" placeholder="name@domain.com"></div>
+    <div class="auth-field"><label>Password</label><input type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+    <label class="check-inline" style="margin:6px 0 16px;"><input type="checkbox" checked disabled> I agree to the Terms &amp; Conditions and Privacy Policy</label>
+    <button class="btn primary lg block" data-auth="otp">Create Account</button>
+    <div class="auth-divider">or continue with</div>
+    <button class="btn lg block" data-auth="otp">Continue with Google</button>
+  </div></div>`;
+}
+
+function renderOtp(){
+  return `
+  <div class="auth-wrap"><div class="card auth-card">
+    <div class="mark" style="width:52px; height:52px; margin:0 auto 18px; border-radius:6px;"><span style="font-size:20px;">LM</span></div>
+    <h2 style="font-size:21px; margin-bottom:8px;">Verify Your Account</h2>
+    <p style="color:var(--ink-muted); font-size:13.5px;">We've sent a 6-digit verification code to your email/phone.</p>
+    <div class="otp-row">${[0,1,2,3,4,5].map(()=>`<input maxlength="1" inputmode="numeric" class="otp-digit">`).join('')}</div>
+    <div class="resend">Resend code in 30s &middot; <a href="#" data-auth="resend">send again</a></div>
+    <button class="btn primary lg block" data-auth="role">Verify &rarr;</button>
+  </div></div>`;
+}
+
+const roleDefs = [
+  {id:'tenant', icon:'&#127968;', title:'Tenant', sub:'I want to find a home'},
+  {id:'owner', icon:'&#128188;', title:'Property Owner', sub:'I want to lease my property directly'},
+  {id:'broker', icon:'&#129309;', title:'Broker / Agency', sub:'I represent landlords and manage listings'},
+  {id:'pm', icon:'&#127970;', title:'Property Management Company', sub:'I manage a portfolio on behalf of owners'},
+];
+
+function renderRoleSelect(){
+  return `
+  <div class="auth-wrap"><div class="card auth-card" style="text-align:left;">
+    <div style="text-align:center;">
+      <div class="mark" style="width:48px; height:48px; margin:0 auto 16px; border-radius:6px;"><span style="font-size:18px;">LM</span></div>
+      <h2 style="font-size:21px; margin-bottom:6px;">Select Your Role</h2>
+      <p style="color:var(--ink-muted); font-size:13.5px; margin-bottom:22px;">Choose the account type that best describes your goals.</p>
+    </div>
+    ${roleDefs.map(r=>`
+      <button class="role-card ${state.pendingRole===r.id?'on':''}" data-role="${r.id}">
+        <div class="ricon">${r.icon}</div>
+        <div><div class="rtitle">${r.title}</div><div class="rsub">${r.sub}</div></div>
+        <div class="rcheck">&#10003;</div>
+      </button>`).join('')}
+    <button class="btn primary lg block" style="margin-top:6px;" data-auth="enter">Continue</button>
+  </div></div>`;
+}
+
+/* ================= applicant: step 1 (property features) ================= */
+function renderApplicantStep1(){
+  const p = state.applicant.profile;
+  return `
+  <div class="applicant-main">
+    <div class="step-label">Step 1 of 2</div>
+    <h1 style="font-size:26px; margin-bottom:6px;">Property Features</h1>
+    <p style="color:var(--ink-muted); margin-bottom:24px; max-width:56ch;">Let our AI curator understand the shape of your ideal home. Detail the core features below — we'll match you against live provider inventory.</p>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>What type of property are you seeking?</h3></div>
+      <div class="chip-row">${propertyTypesList.map(t=>`<button class="chip ${p.propertyTypes.includes(t)?'on':''}" data-toggle="propertyTypes" data-val="${t}">${t}</button>`).join('')}</div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Desired area &amp; rooms</h3></div>
+      <div class="form-grid" style="padding:0; grid-template-columns:1fr 1fr;">
+        <div class="field"><label>Desired area (sqft)</label><input id="f-sqft" type="number" placeholder="e.g. 1200" value="${p.sqft}"></div>
+        <div class="field"><label>Number of rooms</label>
+          <div class="stepper-count"><button data-rooms="-1">&minus;</button><span class="n" id="roomsN">${p.rooms}</span><button data-rooms="1">+</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Preferred locations</h3></div>
+      <div class="chip-row">${areasList.map(a=>`<button class="chip ${p.locations.includes(a)?'on':''}" data-toggle="locations" data-val="${a}">${a}</button>`).join('')}</div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Furnishing status</h3></div>
+      <div class="toggle-row" id="furnishToggle">
+        <button data-furn="unfurnished" class="${p.furnishing==='unfurnished'?'on':''}">Unfurnished</button>
+        <button data-furn="furnished" class="${p.furnishing==='furnished'?'on':''}">Furnished</button>
+      </div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Listing provider preference</h3></div>
+      <div class="provider-pref">
+        <button data-pref="direct owner" class="${p.providerPref==='direct owner'?'on':''}"><span class="icon">&#128100;</span>Direct owner</button>
+        <button data-pref="lease company" class="${p.providerPref==='lease company'?'on':''}"><span class="icon">&#127970;</span>Lease company</button>
+        <button data-pref="broker agency" class="${p.providerPref==='broker agency'?'on':''}"><span class="icon">&#129309;</span>Real estate broker / agency</button>
+      </div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Renovation history</h3></div>
+      <div class="toggle-row" style="margin-bottom:12px;">
+        <button data-renov="renovated" class="${p.renovation==='renovated'?'on':''}">Renovated</button>
+        <button data-renov="requires" class="${p.renovation==='requires'?'on':''}">Requires renovation</button>
+      </div>
+      ${p.renovation==='requires' ? `
+      <div class="card" style="padding:14px 16px;">
+        <div style="font-size:13px; font-weight:600; margin-bottom:10px;">How would you prefer to handle upcoming renovations?</div>
+        <label class="check-inline" style="margin-bottom:8px;"><input type="radio" name="renovH" ${p.renovationHandling==='own'?'checked':''} data-renovh="own"> Readiness to renovate at own cost, with rent deduction</label><br>
+        <label class="check-inline"><input type="radio" name="renovH" ${p.renovationHandling==='split'?'checked':''} data-renovh="split"> Split costs with landlord</label>
+      </div>` : ''}
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Essential utilities</h3></div>
+      <div class="chip-row">
+        ${['gas','sanitation','electricity','water'].map(u=>`<button class="chip ${p.utilities.includes(u)?'on':''}" data-toggle="utilities" data-val="${u}">${cap(u)}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Curated amenities</h3></div>
+      <div class="chip-row">
+        ${['Parking','Gym','Swimming pool','Valet','Pet friendly','Concierge'].map(a=>`<button class="chip ${p.amenities.includes(a)?'on':''}" data-toggle="amenities" data-val="${a}">${a}</button>`).join('')}
+      </div>
+    </div>
+
+    <label class="check-inline" style="padding:14px 16px; border:1px solid var(--line); border-radius:11px; background:var(--surface); margin-bottom:20px;">
+      <input type="checkbox" id="consentChk" ${p.consent?'checked':''}>
+      I consent to a 2.5% success fee if matched with a real estate/leasing company. This fee covers matching priority within the LeaseMatch network and is only charged on a signed lease.
+    </label>
+
+    <button class="btn primary lg block" id="step1Continue" ${p.consent?'':'disabled'}>Continue</button>
+  </div>`;
+}
+
+/* ================= applicant: step 2 (lease & identity) ================= */
+function renderApplicantStep2(){
+  const p = state.applicant.profile;
+  const canSubmit = p.certified && p.signed && p.idUploaded && p.idNumber && p.budget;
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="step1">&larr; Back</button></div>
+    <div class="step-label">Step 2 of 2</div>
+    <h1 style="font-size:26px; margin-bottom:22px;">Lease &amp; Applicant Details</h1>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Lease framework</h3></div>
+      <div class="toggle-row" style="margin-bottom:14px;">
+        <button data-lt="yearly" class="${p.leaseType==='yearly'?'on':''}">Yearly</button>
+        <button data-lt="monthly" class="${p.leaseType==='monthly'?'on':''}">Monthly</button>
+      </div>
+      <div class="field" style="max-width:260px;"><label>Estimated budget (AED)</label><input id="f-budget2" type="number" placeholder="0.00" value="${p.budget}"></div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Identity verification</h3></div>
+      <div class="field-eyebrow" style="margin-top:2px;">Immigration status</div>
+      <div class="toggle-row" style="margin-bottom:14px;">
+        <button data-imm="resident" class="${p.immigration==='resident'?'on':''}">Resident</button>
+        <button data-imm="visitor" class="${p.immigration==='visitor'?'on':''}">Visitor</button>
+      </div>
+      <div class="field-eyebrow">Occupation type</div>
+      <div class="toggle-row" style="margin-bottom:14px;">
+        <button data-occ="employed" class="${p.occupation==='employed'?'on':''}">Employed</button>
+        <button data-occ="self" class="${p.occupation==='self'?'on':''}">Self-employed</button>
+      </div>
+      <div class="field" style="max-width:320px; margin-bottom:14px;"><label>Emirates ID or passport number</label><input id="f-idnum" placeholder="784-XXXX-XXXXXXX-X" value="${p.idNumber}"></div>
+      <div class="dropzone ${p.idUploaded?'filled':''}" id="idDropzone">
+        <div class="dz-icon">${p.idUploaded?'&#9989;':'&#9729;'}</div>
+        <div class="dz-label">${p.idUploaded?'emirates-id-scan.jpg uploaded':'Upload identity document'}</div>
+        <div class="dz-sub">OCR-ready scan of Emirates ID or Passport (PDF, JPG)</div>
+      </div>
+    </div>
+
+    <div class="step-section">
+      <div class="sh"><div class="bar"></div><h3>Certification</h3></div>
+      <label class="check-inline" style="margin-bottom:16px;">
+        <input type="checkbox" id="certChk" ${p.certified?'checked':''}>
+        I hereby certify that the information provided is true, complete, and accurate to the best of my knowledge.
+      </label>
+      <div class="field-eyebrow">Digital signature</div>
+      <div class="sig-pad ${p.signed?'signed':''}" id="sigPad">
+        ${p.signed ? `<span class="sig-mark">Signed &#10003;</span>` : `<span class="sig-hint">Click to sign using your cursor or touch screen</span>`}
+      </div>
+    </div>
+
+    <button class="btn primary lg block" id="submitProfile" ${canSubmit?'':'disabled'}>Submit Application &rarr;</button>
+    <div style="text-align:center; font-size:11.5px; color:var(--ink-faint); margin-top:10px;">By submitting, you agree to LeaseMatch's Terms of Service and Privacy Policy.</div>
+  </div>`;
+}
+
+function renderApplicantSubmitting(){
+  return `
+  <div class="applicant-main" style="text-align:center; padding-top:50px;">
+    <div style="width:64px; height:64px; border-radius:16px; background:var(--gold-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:28px; color:var(--gold);">&#10003;</div>
+    <h2 style="font-size:24px; margin-bottom:8px;">Thank you for your submission!</h2>
+    <p style="color:var(--ink-muted); max-width:44ch; margin:0 auto 26px;">Our AI is now reviewing your application and documents. We'll deliver your matches in seconds.</p>
+    <div class="card" style="max-width:420px; margin:0 auto; padding:18px;">
+      <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:600; margin-bottom:8px;">
+        <span>Documents under inspection</span><span class="mono" id="inspectPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="fill" id="inspectFill" style="width:0%;"></div></div>
+      <div style="font-size:12px; color:var(--ink-muted); margin-top:8px;">Verifying identification &amp; matching against live inventory&hellip;</div>
+    </div>
+  </div>`;
+}
+
+/* ================= applicant: matches / detail (reused) ================= */
+function scoreProperty(p, pr){
+  let score = 0;
+  score += (!p.propertyTypes.length || p.propertyTypes.includes(pr.type)) ? 35 : 5;
+  score += (!p.locations.length || p.locations.includes(pr.loc)) ? 35 : 5;
+  if(!p.budget) score += 30;
+  else { const b = Number(p.budget); if(pr.price<=b) score += 30; else if(pr.price<=b*1.25) score += 16; else score += 4; }
+  return Math.min(99, score);
+}
+function matchFromProfile(p){
+  // Always returns every live listing, ranked by fit — a real matching engine narrows the same way
+  // but a demo should never dead-end into "no matches" just because a chip combo is narrow.
+  return properties.map(pr=>({...pr, matchScore: scoreProperty(p,pr)})).sort((a,b)=>b.matchScore-a.matchScore);
+}
+
+function renderApplicantMatches(){
+  const list = state.applicant.matches;
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="step1">&larr; Refine search</button></div>
+    <div class="section-head">
+      <h2>${list.length} listing${list.length===1?'':'s'} ranked for your profile</h2>
+      <span class="sub">AI-ranked live against provider inventory</span>
+    </div>
+    ${list.length===0 ? emptyState('No live listings yet','Check back soon — new listings are added daily.') : `
+    <div class="listings-grid">
+      ${list.map((p,i)=>`
+        <div class="card listing-card" data-open-listing="${p.id}">
+          <div class="listing-photo" style="${PHOTO(i)}"><div class="price-tag">${money(p.price)}/${p.period}</div><div class="match-badge">${p.matchScore}% match</div></div>
+          <div class="listing-body">
+            <h3>${p.title}</h3>
+            <div class="listing-loc">${p.loc}</div>
+            <div class="listing-specs">
+              <span>${p.beds===0?'Studio':p.beds+' bed'}</span><span>&middot;</span>
+              <span>${p.baths} bath</span><span>&middot;</span>
+              <span>${p.sqft} sqft</span>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`}
+  </div>`;
+}
+
+function renderApplicantDetail(){
+  const p = state.applicant.selectedProperty;
+  const idx = properties.findIndex(x=>x.id===p.id);
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="matches">&larr; Back to matches</button></div>
+    <div class="detail-photo" style="${PHOTO(idx,260)}"></div>
+    <div class="detail-grid">
+      <div>
+        <h1 style="font-size:26px;">${p.title}</h1>
+        <div class="listing-loc" style="margin-top:6px; font-size:14px;">${p.loc} &middot; Listed by ${p.provider}</div>
+        <p style="margin-top:16px; color:var(--ink-muted); max-width:60ch;">${p.desc}</p>
+        <div class="listing-specs" style="margin-top:18px; font-size:13.5px; gap:16px;">
+          <span><strong>${p.beds===0?'Studio':p.beds+' bed'}</strong></span>
+          <span><strong>${p.baths}</strong> bath</span>
+          <span><strong>${p.sqft}</strong> sqft</span>
+          <span><strong>${cap(p.furnished)}</strong></span>
+        </div>
+        <div class="amenity-list">${p.amenities.map(a=>`<span>${a}</span>`).join('')}</div>
+      </div>
+      <div class="card price-box">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div class="amt">${money(p.price)}</div>
+          <span class="pill verified">${scoreProperty(state.applicant.profile,p)}% match</span>
+        </div>
+        <div class="per">per year &middot; ${cap(p.type)}</div>
+        <button class="btn primary block" style="margin-top:16px;" id="applyBtn">Proceed with lease</button>
+        <div style="font-size:12px; color:var(--ink-faint); margin-top:10px;">Your verified profile is sent instantly — no re-verification needed.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderApplicantConfirm(){
+  return `
+  <div class="applicant-main">
+    <div class="empty" style="padding-top:60px;">
+      <div class="glyph">&#10003;</div>
+      <h2 style="font-size:22px; margin-bottom:8px;">Application submitted</h2>
+      <p>The property provider has been notified. You can track the status of every application from "My applications."</p>
+      <button class="btn primary" style="margin-top:18px;" data-nav="myapps">View my applications</button>
+    </div>
+  </div>`;
+}
+
+/* ================= applicant: my applications + lease flow ================= */
+function renderApplicantMyApps(){
+  const apps = applicants.filter(a=>a.isYou);
+  return `
+  <div class="applicant-main">
+    <div class="section-head"><h2>My applications</h2><span class="sub">Live status, synced with the provider — this is the same record they see</span></div>
+    ${apps.length===0 ? emptyState('No applications yet','Once you apply to a listing, you\'ll be able to track its status here.') :
+      apps.map(a=>{
+        const p = properties.find(x=>x.id===a.propertyId);
+        const idx = properties.findIndex(x=>x.id===a.propertyId);
+        return `<div class="app-list-item">
+          <div class="app-thumb" style="${PHOTO(idx,56)}"></div>
+          <div class="app-info">
+            <h4>${p.title}</h4>
+            <div class="meta">${p.loc} &middot; ${money(p.price)}/yr &middot; ${p.provider}</div>
+          </div>
+          <div class="app-actions">
+            ${statusPill(mapApplicantStatus(a.status))}
+            ${a.status==='accepted' ? renderLeaseCta(a.propertyId, a.id) : ''}
+          </div>
+        </div>`;
+      }).join('')}
+  </div>`;
+}
+
+function renderApplicantLease(){
+  const a = applicants.find(x=>x.id===state.applicant.leaseAppId);
+  const p = properties.find(x=>x.id===a.propertyId);
+  const lease = ensureLease(a.propertyId, 'You');
+  const dep = Math.round(p.price*0.05), fee = Math.round(p.price*0.05), installment = Math.round(p.price/4);
+  const stage = lease.stage;
+  const stageOrder = ['pending_draft','awaiting_signature','awaiting_finalize','awaiting_payment','awaiting_confirmation','finalized'];
+  const idx = stageOrder.indexOf(stage);
+
+  let body = '';
+  if(stage==='pending_draft'){
+    body = `
+      <div class="card empty" style="padding:36px 20px;">
+        <div class="glyph">&#8987;</div>
+        <strong style="color:var(--ink); font-size:15px;">Waiting on the provider</strong>
+        <div style="margin-top:6px; max-width:42ch; margin-inline:auto;">${p.provider} is preparing your lease agreement. You'll be notified the moment it's ready to review.</div>
+      </div>`;
+  } else if(stage==='awaiting_signature'){
+    body = `
+      <div class="step-section">
+        <div class="sh"><div class="bar"></div><h3>Lease terms</h3></div>
+        <div class="card" style="padding:6px 18px;">
+          <div class="lease-summary-row"><span class="k">Property</span><span class="v" style="font-family:inherit;">${p.title}</span></div>
+          <div class="lease-summary-row"><span class="k">Annual rent</span><span class="v">${money(p.price)}</span></div>
+          <div class="lease-summary-row"><span class="k">Security deposit</span><span class="v">${money(dep)}</span></div>
+          <div class="lease-summary-row"><span class="k">LeaseMatch service fee (2.5%)</span><span class="v">${money(fee)}</span></div>
+          <div class="lease-summary-row"><span class="k">Lease term</span><span class="v" style="font-family:inherit;">12 months</span></div>
+        </div>
+      </div>
+      <label class="check-inline" style="margin-bottom:16px;"><input type="checkbox" id="agreeTerms" ${lease.termsAgreed?'checked':''}> I have reviewed and agree to these lease terms.</label>
+      <div class="step-section">
+        <div class="sh"><div class="bar"></div><h3>Digital signature</h3></div>
+        <div class="sig-pad ${lease.signed?'signed':''}" id="leaseSig">${lease.signed?'<span class="sig-mark">Signed &#10003;</span>':'<span class="sig-hint">Click to sign the lease agreement</span>'}</div>
+      </div>
+      <button class="btn primary block" id="leaseSignSubmit" ${(lease.termsAgreed && lease.signed)?'':'disabled'}>Submit signed agreement</button>`;
+  } else if(stage==='awaiting_finalize'){
+    body = `
+      <div class="card empty" style="padding:36px 20px;">
+        <div class="glyph">&#8987;</div>
+        <strong style="color:var(--ink); font-size:15px;">Waiting on the provider</strong>
+        <div style="margin-top:6px; max-width:42ch; margin-inline:auto;">Your signature is on file. ${p.provider} is reviewing and finalizing the agreement.</div>
+      </div>`;
+  } else if(stage==='awaiting_payment'){
+    body = `
+      <div class="step-section">
+        <div class="sh"><div class="bar"></div><h3>Payment summary</h3></div>
+        <div class="card" style="padding:6px 18px;">
+          <div class="lease-summary-row"><span class="k">Security deposit</span><span class="v">${money(dep)}</span></div>
+          <div class="lease-summary-row"><span class="k">First rent installment</span><span class="v">${money(installment)}</span></div>
+          <div class="lease-summary-row"><span class="k">Total due now</span><span class="v">${money(dep + installment)}</span></div>
+        </div>
+      </div>
+      <button class="btn primary block" id="payNow" style="margin-bottom:10px;">Pay ${money(dep + installment)} now</button>
+      <button class="btn ghost block" id="payFinance" style="margin-bottom:20px;">Or request financing instead</button>
+      <div class="step-section">
+        <div class="sh"><div class="bar"></div><h3>Already paid another way?</h3></div>
+        <div class="dropzone ${lease.receiptUploaded?'filled':''}" id="receiptDropzone">
+          <div class="dz-icon">${lease.receiptUploaded?'&#9989;':'&#9729;'}</div>
+          <div class="dz-label">${lease.receiptUploaded?'payment-receipt.pdf uploaded':'Upload payment receipt'}</div>
+          <div class="dz-sub">Bank transfer or cheque confirmation (PDF, JPG)</div>
+        </div>
+      </div>`;
+  } else if(stage==='awaiting_confirmation'){
+    body = `
+      <div class="card empty" style="padding:36px 20px;">
+        <div class="glyph">&#8987;</div>
+        <strong style="color:var(--ink); font-size:15px;">Waiting on the provider</strong>
+        <div style="margin-top:6px; max-width:42ch; margin-inline:auto;">${lease.paid?'Your payment is':'Your uploaded receipt is'} awaiting confirmation from ${p.provider}.</div>
+      </div>`;
+  } else {
+    body = `
+      <div class="empty" style="padding-top:20px;">
+        <div class="glyph">&#10003;</div>
+        <h2 style="font-size:22px; margin-bottom:8px;">Lease finalized</h2>
+        <p>Payment confirmed and your signed agreement is on file. Welcome home.</p>
+        <button class="btn primary block" style="margin-top:18px; max-width:260px; margin-inline:auto;" id="downloadLease">Download signed agreement</button>
+        <div><button class="btn ghost" style="margin-top:14px;" data-nav="myapps">Back to my applications</button></div>
+      </div>`;
+  }
+
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="myapps">&larr; My applications</button></div>
+    <h1 style="font-size:24px; margin-bottom:4px;">${p.title}</h1>
+    <div class="listing-loc" style="margin-bottom:20px;">${p.loc}</div>
+    <div class="stepper">${stageOrder.slice(0,5).map((s,si)=>`<div class="step ${si<=idx?'done':''}"></div>`).join('')}</div>
+    ${body}
+  </div>`;
+}
+
+/* ================= applicant: profile + notifications ================= */
+function renderApplicantProfile(){
+  const p = state.applicant.profile;
+  return `
+  <div class="narrow-main">
+    <div class="section-head"><h2>Profile</h2></div>
+    <div class="card" style="padding:20px;">
+      <div class="lease-summary-row"><span class="k">Immigration status</span><span class="v" style="font-family:inherit;">${cap(p.immigration)}</span></div>
+      <div class="lease-summary-row"><span class="k">Occupation</span><span class="v" style="font-family:inherit;">${p.occupation==='employed'?'Employed':'Self-employed'}</span></div>
+      <div class="lease-summary-row"><span class="k">ID number</span><span class="v">${p.idNumber||'&mdash;'}</span></div>
+      <div class="lease-summary-row"><span class="k">Identity document</span><span class="v" style="font-family:inherit;">${p.idUploaded?'Uploaded':'Not uploaded'}</span></div>
+      <div class="lease-summary-row"><span class="k">Budget</span><span class="v">${p.budget?money(p.budget):'&mdash;'}</span></div>
+    </div>
+    <div class="section-head" style="margin-top:24px;"><h2 style="font-size:16px;">Settings</h2></div>
+    <div class="card" style="padding:6px 18px;">
+      <div class="lease-summary-row"><span class="k">Notification preferences</span><span class="v" style="font-family:inherit; color:var(--gold);">Manage</span></div>
+      <div class="lease-summary-row"><span class="k">Payment history</span><span class="v" style="font-family:inherit; color:var(--gold);">View</span></div>
+      <div class="lease-summary-row"><span class="k">Privacy policy</span><span class="v" style="font-family:inherit; color:var(--gold);">Read</span></div>
+    </div>
+  </div>`;
+}
+
+function renderNotifications(list){
+  return `
+  <div class="narrow-main">
+    <div class="section-head"><h2>Notifications</h2></div>
+    ${list.map(n=>`<div class="notif-row"><div class="notif-dot ${n.read?'read':''}"></div><div class="body"><div class="txt">${n.txt}</div><div class="time">${n.time}</div></div></div>`).join('')}
+  </div>`;
+}
+
+function statusPill(status){
+  const map = {
+    pending:['pending','Under review'], review:['review','Documents under inspection'],
+    clarify:['clarify','Clarification requested'], accepted:['accepted','Accepted'], declined:['declined','Declined'],
+  };
+  const [cls,label] = map[status] || map.pending;
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+function renderLeaseCta(propertyId, appId){
+  const lease = leases[propertyId];
+  if(!lease) return '';
+  const info = leaseStageInfo[lease.stage];
+  const tenantsTurn = lease.stage==='awaiting_signature' || lease.stage==='awaiting_payment' || lease.stage==='finalized';
+  if(tenantsTurn) return `<button class="btn sm primary" data-lease="${appId}">${lease.stage==='finalized'?'View lease':(lease.stage==='awaiting_payment'?'Make payment':'Review & sign')}</button>`;
+  return `<span class="pill pending">${info.tenantLabel}</span>`;
+}
+
+function emptyState(title, sub){
+  return `<div class="card empty"><div class="glyph">&#8982;</div><strong style="color:var(--ink); font-size:15px;">${title}</strong><div style="margin-top:6px; max-width:42ch; margin-inline:auto;">${sub}</div></div>`;
+}
+
+const applicantTabs = [
+  {id:'step1', label:'Find a home'},
+  {id:'myapps', label:'My applications'},
+  {id:'profile', label:'Profile'},
+  {id:'notifications', label:'Notifications'},
+];
+function applicantTabActive(v){
+  if(['step1','step2','submitting','matches','detail','confirm'].includes(v)) return 'step1';
+  if(v==='lease') return 'myapps';
+  return v;
+}
+function renderApplicantTabsBar(v){
+  const active = applicantTabActive(v);
+  return `<div style="display:flex; gap:6px; padding:10px 24px 0; max-width:960px; margin:0 auto; flex-wrap:wrap;">
+    ${applicantTabs.map(t=>`<button class="btn sm ${active===t.id?'primary':'ghost'}" data-nav="${t.id}">${t.label}</button>`).join('')}
+  </div>`;
+}
+
+function renderApplicant(){
+  const v = state.applicant.view;
+  let bar = renderApplicantTabsBar(v);
+  let body = '';
+  if(v==='step1') body = renderApplicantStep1();
+  else if(v==='step2') body = renderApplicantStep2();
+  else if(v==='submitting') body = renderApplicantSubmitting();
+  else if(v==='matches') body = renderApplicantMatches();
+  else if(v==='detail') body = renderApplicantDetail();
+  else if(v==='confirm') body = renderApplicantConfirm();
+  else if(v==='myapps') body = renderApplicantMyApps();
+  else if(v==='lease') body = renderApplicantLease();
+  else if(v==='profile') body = renderApplicantProfile();
+  else if(v==='notifications') body = renderNotifications(state.applicant.notifications);
+  return `<div style="flex:1;">${bar}${body}</div>`;
+}
+
+/* ================= provider views ================= */
+const providerNav = [
+  {id:'overview', label:'Overview'},
+  {id:'properties', label:'Properties'},
+  {id:'leases', label:'Leases'},
+  {id:'tenantSearch', label:'Find tenant'},
+  {id:'documents', label:'Documents'},
+  {id:'notifications', label:'Notifications'},
+];
+const roleLabels = {
+  owner:{name:'Property Owner', fee:'Free to list'},
+  broker:{name:'Broker / Agency', fee:'35% of commission on signed lease'},
+  pm:{name:'Property Management Co.', fee:'AED 4,000/mo subscription'},
+};
+
+function providerKPIs(){
+  const avgDaysVacant = Math.round(properties.reduce((s,p)=>s+p.daysVacant,0)/properties.length);
+  const totalApplicants = applicants.length;
+  const verifiedShare = Math.round(100*applicants.filter(a=>a.verified).length/applicants.length);
+  return `
+  <div class="kpis">
+    <div class="kpi"><div class="label">Vacant units</div><div class="value mono">${properties.length}</div><div class="delta warn">3 over 60 days vacant</div></div>
+    <div class="kpi"><div class="label">Avg. days vacant</div><div class="value mono">${avgDaysVacant}</div><div class="delta good">&darr; 18 vs. last quarter</div></div>
+    <div class="kpi"><div class="label">Active applicants</div><div class="value mono">${totalApplicants}</div><div class="delta good">${verifiedShare}% pre-verified</div></div>
+    <div class="kpi"><div class="label">Avg. time-to-lease</div><div class="value mono">2.3<span style="font-size:15px;">d</span></div><div class="delta good">from first match to signature</div></div>
+  </div>`;
+}
+
+function renderProviderOverview(){
+  const stale = properties.filter(p=>p.daysVacant>30).sort((a,b)=>b.daysVacant-a.daysVacant);
+  return `
+  <div class="section-head"><h2>Portfolio overview</h2><span class="sub">Marina Property Management &middot; Meadows Estates &middot; Skyline Leasing Co. (sample portfolio)</span></div>
+  ${providerKPIs()}
+  <div class="section-head"><h2 style="font-size:17px;">Needs attention</h2></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Unit</th><th>Location</th><th>Days vacant</th><th>Applicants</th><th>Status</th></tr></thead>
+    <tbody>
+      ${stale.map(p=>{
+        const n = applicants.filter(a=>a.propertyId===p.id).length;
+        return `<tr data-open-property="${p.id}">
+          <td>${p.title}</td><td>${p.loc}</td>
+          <td class="mono">${p.daysVacant}</td>
+          <td class="mono">${n}</td>
+          <td><span class="pill vacant">Vacant</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderProviderProperties(){
+  return `
+  <div class="section-head">
+    <h2>Properties</h2>
+    <button class="btn sm primary" data-nav-provider="addProperty">+ Add new property</button>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Unit</th><th>Location</th><th>Rent (yr)</th><th>Days vacant</th><th>Applicants</th><th></th></tr></thead>
+    <tbody>
+      ${properties.map(p=>{
+        const n = applicants.filter(a=>a.propertyId===p.id).length;
+        return `<tr data-open-property="${p.id}">
+          <td>${p.title}</td><td>${p.loc}</td>
+          <td class="mono">${money(p.price)}</td>
+          <td class="mono">${p.daysVacant}</td>
+          <td class="mono">${n}</td>
+          <td><span class="pill ${p.daysVacant>30?'vacant':'offer'}">${p.daysVacant>30?'Vacant':'Under review'}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderProviderAddProperty(){
+  return `
+  <div class="breadcrumb"><button data-nav-provider="properties">&larr; All properties</button></div>
+  <div class="section-head"><h2>Add new property</h2></div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="field span2"><label>Property title</label><input id="np-title" placeholder="e.g. 2BR Apartment, Marina Gate"></div>
+      <div class="field"><label>Type</label><select id="np-type">${propertyTypesList.map(t=>`<option value="${t}">${cap(t)}</option>`).join('')}</select></div>
+      <div class="field"><label>Location</label><select id="np-loc">${areasList.map(a=>`<option>${a}</option>`).join('')}</select></div>
+      <div class="field"><label>Annual rent (AED)</label><input id="np-price" type="number" placeholder="90000"></div>
+      <div class="field"><label>Bedrooms</label><input id="np-beds" type="number" placeholder="1"></div>
+      <div class="field"><label>Bathrooms</label><input id="np-baths" type="number" placeholder="2"></div>
+      <div class="field"><label>Size (sqft)</label><input id="np-sqft" type="number" placeholder="850"></div>
+      <div class="field span2"><label>Description</label><textarea id="np-desc" placeholder="Describe the unit, building, and neighborhood&hellip;"></textarea></div>
+      ${state.providerRole!=='owner' ? `<div class="field span2"><label>RERA / broker license number</label><input id="np-license" placeholder="e.g. BRN-48213"></div>` : ''}
+    </div>
+    <div style="padding:0 22px 8px;">
+      <div class="field-eyebrow">Ownership document</div>
+      <div class="dropzone" id="ownDropzone"><div class="dz-icon">&#9729;</div><div class="dz-label">Upload title deed or ownership proof</div><div class="dz-sub">PDF, JPG (max. 10MB)</div></div>
+    </div>
+    <div class="form-actions"><button class="btn primary" id="submitProperty">Submit for verification</button></div>
+  </div>`;
+}
+
+function renderProviderApplicants(){
+  const p = state.provider.selectedProperty;
+  const list = applicants.filter(a=>a.propertyId===p.id);
+  return `
+  <div class="breadcrumb"><button data-nav-provider="properties">&larr; All properties</button></div>
+  <div class="section-head">
+    <h2>${p.title}</h2>
+    <span class="sub">${p.loc} &middot; ${money(p.price)}/yr &middot; vacant ${p.daysVacant} days</span>
+  </div>
+  ${list.length===0 ? emptyState('No applicants yet','As tenants apply, verified profiles will appear here for review.') :
+  list.map(a=>`
+    <div class="applicant-card">
+      <div class="avatar">${a.name[0]}</div>
+      <div class="applicant-info">
+        <div class="name-row">
+          <h4>${a.name}</h4>
+          ${a.verified?'<span class="pill verified">&#9733; Verified</span>':'<span class="pill pending">Verification pending</span>'}
+          ${statusPill(mapApplicantStatus(a.status))}
+        </div>
+        <div class="applicant-facts">
+          <span>${a.occupation}</span>
+          <span class="mono">${money(a.income)}/mo gross</span>
+          <span>Move-in: ${a.moveIn}</span>
+        </div>
+      </div>
+      <div class="applicant-actions">
+        ${a.status==='pending' ? `
+          <button class="btn sm primary" data-action="accept" data-aid="${a.id}">Accept</button>
+          <button class="btn sm" data-action="clarify" data-aid="${a.id}">Clarify</button>
+          <button class="btn sm danger" data-action="decline" data-aid="${a.id}">Decline</button>
+        ` : `<button class="btn sm ghost" disabled>${cap(a.status)}</button>`}
+      </div>
+    </div>`).join('')}
+  `;
+}
+function mapApplicantStatus(s){ return s==='pending' ? 'review' : s; }
+
+function renderProviderLeases(){
+  const entries = Object.keys(leases);
+  if(entries.length===0) return `
+    <div class="section-head"><h2>Leases</h2><span class="sub">Agreements and payments in progress</span></div>
+    ${emptyState('No leases in progress yet','Accept an applicant from a property to start a lease agreement here.')}`;
+
+  return `
+  <div class="section-head"><h2>Leases</h2><span class="sub">Agreements and payments in progress</span></div>
+  ${entries.map(pid=>{
+    const p = properties.find(x=>x.id===pid);
+    const lease = leases[pid];
+    const info = leaseStageInfo[lease.stage];
+    let action = '';
+    if(info.providerAction==='draft') action = `<button class="btn sm primary" data-lease-action="draft" data-pid="${pid}">Create lease agreement</button>`;
+    else if(info.providerAction==='finalize') action = `<button class="btn sm primary" data-lease-action="finalize" data-pid="${pid}">Review signature &amp; finalize</button>`;
+    else if(info.providerAction==='confirm') action = `<button class="btn sm primary" data-lease-action="confirm" data-pid="${pid}">Confirm receipt of payment</button>`;
+    else action = `<span class="pill pending">${info.providerLabel}</span>`;
+    return `
+    <div class="app-list-item">
+      <div class="app-thumb" style="${PHOTO(properties.findIndex(x=>x.id===pid),56)}"></div>
+      <div class="app-info">
+        <h4>${p.title}</h4>
+        <div class="meta">Tenant: ${lease.tenantName} &middot; ${p.loc} &middot; ${money(p.price)}/yr</div>
+      </div>
+      <div class="app-actions">${lease.stage==='finalized'?'<span class="pill accepted">Completed</span>':action}</div>
+    </div>`;
+  }).join('')}`;
+}
+
+function renderProviderTenantSearch(){
+  return `
+  <div class="section-head"><h2>Find tenant</h2><span class="sub">Search verified tenants actively looking, and send them a proposal</span></div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="field"><label>Max budget (AED/yr)</label><input id="ts-budget" type="number" placeholder="e.g. 100000"></div>
+      <div class="field"><label>Preferred area</label><select id="ts-area"><option value="">Any</option>${areasList.map(a=>`<option>${a}</option>`).join('')}</select></div>
+      <div class="field"><label>Move-in timeframe</label><select id="ts-move"><option value="">Any</option><option>This month</option><option>Within 2 weeks</option><option>Next month</option><option>Flexible</option></select></div>
+    </div>
+    <div class="form-actions"><button class="btn primary" id="tsSearchBtn">Search tenant profiles</button></div>
+  </div>
+  <div id="tsResults" style="margin-top:20px;"></div>`;
+}
+
+function renderProviderDocuments(){
+  return `
+  <div class="section-head"><h2>Documents</h2><span class="sub">Ownership proofs, licenses, and lease agreements on file</span></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Document</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>${providerDocuments.map(d=>`<tr><td>${d.name}</td><td class="mono">${d.date}</td><td><span class="pill ${d.status==='verified'?'verified':'pending'}">${cap(d.status)}</span></td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderProvider(){
+  const v = state.provider.view;
+  let body = '';
+  if(v==='overview') body = renderProviderOverview();
+  else if(v==='properties') body = renderProviderProperties();
+  else if(v==='applicants') body = renderProviderApplicants();
+  else if(v==='addProperty') body = renderProviderAddProperty();
+  else if(v==='leases') body = renderProviderLeases();
+  else if(v==='tenantSearch') body = renderProviderTenantSearch();
+  else if(v==='documents') body = renderProviderDocuments();
+  else if(v==='notifications') body = renderNotifications(state.provider.notifications);
+
+  const rl = roleLabels[state.providerRole];
+  return `
+  <div class="sidebar">
+    <div class="navlabel">Workspace</div>
+    <div class="role-chip">${rl.name}<span class="fee">${rl.fee}</span></div>
+    ${providerNav.map(n=>`<button data-nav-provider="${n.id}" class="${(v===n.id || (n.id==='properties'&&(v==='applicants'||v==='addProperty')))?'active':''}"><span class="dot"></span>${n.label}</button>`).join('')}
+  </div>
+  <main>${body}</main>`;
+}
+
+/* ================= render + events ================= */
+function render(){
+  const inApp = state.screen==='app';
+  document.getElementById('modeSwitch').style.visibility = inApp ? 'visible' : 'hidden';
+  document.querySelector('.topbar-right').style.visibility = inApp ? 'visible' : 'hidden';
+  document.querySelectorAll('#modeSwitch button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.mode));
+
+  const shell = document.getElementById('shell');
+  if(state.screen==='landing') shell.innerHTML = renderLanding();
+  else if(state.screen==='signup') shell.innerHTML = renderSignup();
+  else if(state.screen==='otp') shell.innerHTML = renderOtp();
+  else if(state.screen==='role') shell.innerHTML = renderRoleSelect();
+  else {
+    shell.innerHTML = state.mode==='applicant' ? `<main style="flex:1; padding:0;">${renderApplicant()}</main>` : renderProvider();
+  }
+  bindEvents();
+}
+
+function bindEvents(){
+  const shell = document.getElementById('shell');
+  const q = sel => shell.querySelector(sel);
+  const qa = sel => shell.querySelectorAll(sel);
+
+  /* ---- auth flow ---- */
+  qa('[data-auth]').forEach(el=>el.addEventListener('click', ()=>{
+    const a = el.dataset.auth;
+    if(a==='signup'||a==='signin') state.screen='signup';
+    else if(a==='otp') state.screen='otp';
+    else if(a==='resend'){ toast('Verification code resent'); return; }
+    else if(a==='role') state.screen='role';
+    else if(a==='skip'){ state.screen='app'; }
+    else if(a==='enter'){
+      state.screen='app';
+      state.mode = state.pendingRole==='tenant' ? 'applicant' : 'provider';
+      if(state.pendingRole!=='tenant') state.providerRole = state.pendingRole;
+      toast(`Welcome — signed in as ${roleDefs.find(r=>r.id===state.pendingRole).title}`);
+    }
+    render();
+  }));
+  qa('[data-role]').forEach(el=>el.addEventListener('click', ()=>{ state.pendingRole = el.dataset.role; render(); }));
+  qa('.otp-digit').forEach((el,i,arr)=>el.addEventListener('input', ()=>{ if(el.value && arr[i+1]) arr[i+1].focus(); }));
+
+  /* ---- applicant step 1 ---- */
+  const prof = state.applicant.profile;
+  qa('[data-toggle]').forEach(el=>el.addEventListener('click', ()=>{
+    const key = el.dataset.toggle, val = el.dataset.val;
+    const arr = prof[key];
+    const i = arr.indexOf(val);
+    if(i>-1) arr.splice(i,1); else arr.push(val);
+    render();
+  }));
+  q('#f-sqft')?.addEventListener('input', e=>{ prof.sqft = e.target.value; });
+  qa('[data-rooms]').forEach(el=>el.addEventListener('click', ()=>{
+    prof.rooms = Math.max(0, prof.rooms + Number(el.dataset.rooms));
+    render();
+  }));
+  qa('[data-furn]').forEach(el=>el.addEventListener('click', ()=>{ prof.furnishing = el.dataset.furn; render(); }));
+  qa('[data-pref]').forEach(el=>el.addEventListener('click', ()=>{ prof.providerPref = el.dataset.pref; render(); }));
+  qa('[data-renov]').forEach(el=>el.addEventListener('click', ()=>{ prof.renovation = el.dataset.renov; render(); }));
+  qa('[data-renovh]').forEach(el=>el.addEventListener('click', ()=>{ prof.renovationHandling = el.dataset.renovh; render(); }));
+  q('#consentChk')?.addEventListener('change', e=>{ prof.consent = e.target.checked; render(); });
+  q('#step1Continue')?.addEventListener('click', ()=>{ state.applicant.view='step2'; render(); });
+
+  /* ---- applicant step 2 ---- */
+  qa('[data-lt]').forEach(el=>el.addEventListener('click', ()=>{ prof.leaseType = el.dataset.lt; render(); }));
+  q('#f-budget2')?.addEventListener('input', e=>{ prof.budget = e.target.value; });
+  qa('[data-imm]').forEach(el=>el.addEventListener('click', ()=>{ prof.immigration = el.dataset.imm; render(); }));
+  qa('[data-occ]').forEach(el=>el.addEventListener('click', ()=>{ prof.occupation = el.dataset.occ; render(); }));
+  q('#f-idnum')?.addEventListener('input', e=>{ prof.idNumber = e.target.value; });
+  q('#idDropzone')?.addEventListener('click', ()=>{ prof.idUploaded = true; render(); toast('Document uploaded'); });
+  q('#certChk')?.addEventListener('change', e=>{ prof.certified = e.target.checked; render(); });
+  q('#sigPad')?.addEventListener('click', ()=>{ prof.signed = true; render(); });
+  q('#submitProfile')?.addEventListener('click', ()=>{
+    state.applicant.view = 'submitting';
+    render();
+    let pct = 0;
+    const iv = setInterval(()=>{
+      pct += 18 + Math.random()*10;
+      if(pct>=100){ pct=100; clearInterval(iv);
+        setTimeout(()=>{
+          state.applicant.matches = matchFromProfile(prof);
+          state.applicant.view = 'matches';
+          render();
+        }, 350);
+      }
+      const fill = document.getElementById('inspectFill'), pc = document.getElementById('inspectPct');
+      if(fill){ fill.style.width = pct+'%'; pc.textContent = Math.round(pct)+'%'; }
+    }, 260);
+  });
+
+  /* ---- applicant matches/detail ---- */
+  qa('[data-open-listing]').forEach(el=>el.addEventListener('click', ()=>{
+    state.applicant.selectedProperty = properties.find(p=>p.id===el.dataset.openListing);
+    state.applicant.view = 'detail';
+    render();
+  }));
+  q('#applyBtn')?.addEventListener('click', ()=>{
+    const p = state.applicant.selectedProperty;
+    const already = applicants.find(x=>x.propertyId===p.id && x.isYou);
+    if(already){ state.applicant.view = 'confirm'; render(); toast('You already applied to this listing'); return; }
+    const prof = state.applicant.profile;
+    // This lands in the exact same applicants[] queue the provider reviews — switch to "I manage properties"
+    // and open this property to see it appear, live.
+    applicants.unshift({
+      id:'you-'+p.id, name:'You', isYou:true,
+      occupation: prof.occupation==='self' ? 'Self-employed' : 'Employed professional',
+      income: Math.round(Number(prof.budget||60000)/3),
+      verified:true, moveIn:'Flexible', status:'pending', propertyId:p.id,
+    });
+    state.applicant.view = 'confirm';
+    render();
+    toast('Application sent to '+p.provider);
+  });
+
+  qa('[data-nav]').forEach(el=>el.addEventListener('click', ()=>{ state.applicant.view = el.dataset.nav; render(); }));
+
+  /* ---- applicant lease flow ---- */
+  qa('[data-lease]').forEach(el=>el.addEventListener('click', ()=>{
+    state.applicant.leaseAppId = el.dataset.lease;
+    state.applicant.view = 'lease';
+    render();
+  }));
+  function currentLease(){
+    const a = applicants.find(x=>x.id===state.applicant.leaseAppId);
+    return a ? leases[a.propertyId] : null;
+  }
+  q('#agreeTerms')?.addEventListener('change', e=>{ const l=currentLease(); l.termsAgreed = e.target.checked; render(); });
+  q('#leaseSig')?.addEventListener('click', ()=>{ const l=currentLease(); l.signed = true; render(); });
+  q('#leaseSignSubmit')?.addEventListener('click', ()=>{
+    const l = currentLease();
+    l.stage = 'awaiting_finalize';
+    render();
+    toast('Signed agreement sent to provider for finalization');
+  });
+  q('#payNow')?.addEventListener('click', ()=>{
+    const l = currentLease();
+    l.paid = true; l.stage = 'awaiting_confirmation';
+    render();
+    toast('Payment sent — awaiting provider confirmation');
+  });
+  q('#payFinance')?.addEventListener('click', ()=>{ toast("You'll be redirected to our financing partner"); });
+  q('#receiptDropzone')?.addEventListener('click', ()=>{
+    const l = currentLease();
+    l.receiptUploaded = true; l.stage = 'awaiting_confirmation';
+    render();
+    toast('Receipt uploaded — awaiting provider confirmation');
+  });
+  q('#downloadLease')?.addEventListener('click', ()=>{ toast('Downloading signed-lease-agreement.pdf'); });
+
+  /* ---- provider: properties / applicants ---- */
+  qa('[data-open-property]').forEach(el=>el.addEventListener('click', ()=>{
+    state.provider.selectedProperty = properties.find(p=>p.id===el.dataset.openProperty);
+    state.provider.view = 'applicants';
+    render();
+  }));
+  qa('[data-nav-provider]').forEach(el=>el.addEventListener('click', ()=>{ state.provider.view = el.dataset.navProvider; render(); }));
+  qa('[data-action]').forEach(el=>el.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const a = applicants.find(x=>x.id===el.dataset.aid);
+    const action = el.dataset.action;
+    a.status = action==='accept' ? 'accepted' : action==='decline' ? 'declined' : 'clarify';
+    if(action==='accept'){ ensureLease(a.propertyId, a.name); }
+    const label = action==='accept' ? 'Applicant accepted — lease flow started' : action==='decline' ? 'Applicant declined' : 'Clarification requested from applicant';
+    toast(label);
+    render();
+  }));
+
+  /* ---- provider: leases ---- */
+  qa('[data-lease-action]').forEach(el=>el.addEventListener('click', ()=>{
+    const lease = leases[el.dataset.pid];
+    const action = el.dataset.leaseAction;
+    if(action==='draft'){ lease.stage='awaiting_signature'; toast('Lease agreement drafted — sent to tenant'); }
+    else if(action==='finalize'){ lease.stage='awaiting_payment'; toast('Agreement finalized — tenant notified to pay'); }
+    else if(action==='confirm'){ lease.stage='finalized'; toast('Payment receipt confirmed — lease finalized'); }
+    render();
+  }));
+
+  /* ---- provider: add property ---- */
+  q('#ownDropzone')?.addEventListener('click', (e)=>{ e.currentTarget.classList.add('filled'); e.currentTarget.querySelector('.dz-label').textContent='title-deed.pdf uploaded'; toast('Document uploaded'); });
+  q('#submitProperty')?.addEventListener('click', ()=>{
+    const title = q('#np-title').value || 'New listing';
+    const type = q('#np-type').value, loc = q('#np-loc').value;
+    const price = Number(q('#np-price').value)||70000, beds = Number(q('#np-beds').value)||1;
+    const baths = Number(q('#np-baths').value)||1, sqft = Number(q('#np-sqft').value)||700;
+    const desc = q('#np-desc').value || 'New listing, description pending.';
+    const providerName = roleLabels[state.providerRole].name;
+    properties.push({
+      id:'p'+(properties.length+1), title, loc, type, price, period:'yr', beds, baths, sqft,
+      furnished:'unfurnished', provider:providerName, daysVacant:0,
+      amenities:['Parking'], desc
+    });
+    toast('Property submitted for verification');
+    state.provider.view = 'properties';
+    render();
+  });
+
+  /* ---- provider: tenant search ---- */
+  q('#tsSearchBtn')?.addEventListener('click', ()=>{
+    const budget = Number(q('#ts-budget').value)||Infinity, area = q('#ts-area').value, move = q('#ts-move').value;
+    const results = tenantSeekers.filter(t=> t.budget<=budget*1.15 && (!area||t.area===area) && (!move||t.moveIn===move) );
+    const box = document.getElementById('tsResults');
+    box.innerHTML = results.length===0 ? emptyState('No matching tenant profiles','Widen your budget or area to see more verified seekers.') :
+      results.map(t=>`
+        <div class="applicant-card">
+          <div class="avatar">${t.name[0]}</div>
+          <div class="applicant-info">
+            <div class="name-row"><h4>${t.name}</h4>${t.verified?'<span class="pill verified">&#9733; Verified</span>':'<span class="pill pending">Verification pending</span>'}</div>
+            <div class="applicant-facts"><span>${t.occupation}</span><span class="mono">Budget ${money(t.budget)}/yr</span><span>${t.area}</span><span>Move-in: ${t.moveIn}</span></div>
+          </div>
+          <div class="applicant-actions"><button class="btn sm primary" data-proposal="${t.id}">Send proposal</button></div>
+        </div>`).join('');
+    box.querySelectorAll('[data-proposal]').forEach(b=>b.addEventListener('click', ()=>{
+      const t = tenantSeekers.find(x=>x.id===b.dataset.proposal);
+      toast('Proposal sent to '+t.name);
+    }));
+  });
+}
+
+render();
+</script>

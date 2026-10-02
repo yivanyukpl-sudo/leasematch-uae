@@ -1,0 +1,774 @@
+<!doctype html>
+<title>LeaseMatch</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F4F9;
+    --surface:#FFFFFF;
+    --surface-2:#F0EEF6;
+    --ink:#131A2C;
+    --ink-muted:#5B5F72;
+    --ink-faint:#8B8FA0;
+    --line:#E1DEEA;
+    --line-strong:#CBC7DA;
+    --accent:#0E2A4D;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E7EAF2;
+    --accent-soft-ink:#0E2A4D;
+    --gold:#A8792F;
+    --gold-soft:#F3E9D6;
+    --good:#2F7D4F;
+    --good-soft:#E4F1E7;
+    --warn:#B4791C;
+    --warn-soft:#FBEEDA;
+    --critical:#B23A34;
+    --critical-soft:#F8E4E2;
+    --shadow: 0 1px 2px rgba(19,26,44,.04), 0 6px 20px -8px rgba(19,26,44,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1219;
+      --surface:#171A24;
+      --surface-2:#1B1F2B;
+      --ink:#EAEAF2;
+      --ink-muted:#9EA1B4;
+      --ink-faint:#686C80;
+      --line:#2A2E3C;
+      --line-strong:#383D4E;
+      --accent:#7C9BD4;
+      --accent-ink:#0B1220;
+      --accent-soft:#1E2A42;
+      --accent-soft-ink:#9DB6E4;
+      --gold:#D4AC63;
+      --gold-soft:#332A18;
+      --good:#6FBF8B;
+      --good-soft:#1B2F22;
+      --warn:#E0A94C;
+      --warn-soft:#332811;
+      --critical:#E38F89;
+      --critical-soft:#33201E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1219;
+    --surface:#171A24;
+    --surface-2:#1B1F2B;
+    --ink:#EAEAF2;
+    --ink-muted:#9EA1B4;
+    --ink-faint:#686C80;
+    --line:#2A2E3C;
+    --line-strong:#383D4E;
+    --accent:#7C9BD4;
+    --accent-ink:#0B1220;
+    --accent-soft:#1E2A42;
+    --accent-soft-ink:#9DB6E4;
+    --gold:#D4AC63;
+    --gold-soft:#332A18;
+    --good:#6FBF8B;
+    --good-soft:#1B2F22;
+    --warn:#E0A94C;
+    --warn-soft:#332811;
+    --critical:#E38F89;
+    --critical-soft:#33201E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', Georgia, serif; text-wrap:balance; margin:0; letter-spacing:-0.01em; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a{color:inherit;}
+  button{font-family:inherit; font-size:inherit; cursor:pointer;}
+  ::selection{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* ---------- shell ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; padding:12px 20px;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:11px; }
+  .brand .mark{
+    width:32px; height:32px; border:2px solid var(--ink); border-radius:3px;
+    position:relative; flex:none; overflow:hidden;
+  }
+  .brand .mark::before{
+    content:""; position:absolute; inset:0 50% 0 0; background:var(--accent);
+  }
+  .brand .mark::after{
+    content:""; position:absolute; inset:0 0 0 50%; background:var(--gold);
+  }
+  .brand .mark span{
+    position:relative; z-index:1; display:flex; align-items:center; justify-content:center;
+    height:100%; font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:#fff;
+    letter-spacing:-0.03em;
+  }
+  .brand .word{ display:flex; flex-direction:column; line-height:1; }
+  .brand .wordmark{ font-family:'Fraunces', serif; font-weight:600; font-size:20px; letter-spacing:-0.01em; }
+  .brand .wordmark .lease{ color:var(--accent); }
+  .brand .wordmark .match{ color:var(--gold); }
+  .brand .tagline{ font-family:'IBM Plex Sans'; font-weight:500; font-size:9.5px; color:var(--ink-faint); letter-spacing:.12em; text-transform:uppercase; margin-top:3px; }
+  .brand small{ font-family:'IBM Plex Sans'; font-weight:500; font-size:11px; color:var(--ink-faint); letter-spacing:.04em; text-transform:uppercase; margin-left:2px;}
+
+  .mode-switch{
+    display:flex; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px;
+  }
+  .mode-switch button{
+    border:none; background:transparent; color:var(--ink-muted);
+    padding:7px 14px; border-radius:8px; font-weight:600; font-size:13.5px;
+    transition: background .15s, color .15s;
+  }
+  .mode-switch button.active{ background:var(--accent); color:var(--accent-ink); }
+
+  .demo-tag{
+    font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); border:1px solid var(--line); border-radius:6px; padding:4px 8px;
+    white-space:nowrap;
+  }
+
+  .shell{ display:flex; min-height:calc(100vh - 53px); }
+
+  /* ---------- provider sidebar ---------- */
+  .sidebar{
+    width:216px; flex:none; border-right:1px solid var(--line); background:var(--surface);
+    padding:18px 12px; display:flex; flex-direction:column; gap:2px;
+  }
+  .sidebar .navlabel{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600; padding:8px 10px 6px; }
+  .sidebar button{
+    display:flex; align-items:center; gap:10px; text-align:left; width:100%;
+    border:none; background:transparent; color:var(--ink-muted);
+    padding:9px 10px; border-radius:8px; font-weight:500; font-size:14px;
+  }
+  .sidebar button.active{ background:var(--accent-soft); color:var(--accent-soft-ink); font-weight:600; }
+  .sidebar button:hover:not(.active){ background:var(--surface-2); }
+  .sidebar .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none; }
+
+  main{ flex:1; min-width:0; padding:28px 32px 64px; max-width:1180px; }
+  .applicant-main{ max-width:960px; margin:0 auto; padding:32px 24px 72px; }
+
+  /* ---------- generic bits ---------- */
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:28px; }
+  .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow); }
+  .kpi .label{ font-size:12px; color:var(--ink-muted); font-weight:500; margin-bottom:8px; }
+  .kpi .value{ font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .kpi .delta{ font-size:12px; margin-top:6px; font-weight:600; }
+  .kpi .delta.good{ color:var(--good); } .kpi .delta.warn{ color:var(--warn); }
+
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .section-head h2{ font-size:20px; font-weight:600; }
+  .section-head .sub{ color:var(--ink-muted); font-size:13.5px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  thead th{ text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+  tbody td{ padding:13px 14px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr{ cursor:pointer; transition:background .12s; }
+  tbody tr:hover{ background:var(--surface-2); }
+  .table-wrap{ overflow-x:auto; }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .pill.vacant{ background:var(--critical-soft); color:var(--critical); }
+  .pill.occupied{ background:var(--good-soft); color:var(--good); }
+  .pill.offer{ background:var(--warn-soft); color:var(--warn); }
+  .pill.verified{ background:var(--gold-soft); color:var(--gold); }
+  .pill.accepted{ background:var(--good-soft); color:var(--good); }
+  .pill.declined{ background:var(--critical-soft); color:var(--critical); }
+  .pill.review{ background:var(--warn-soft); color:var(--warn); }
+  .pill.clarify{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+  .pill.pending{ background:var(--surface-2); color:var(--ink-muted); border:1px solid var(--line); }
+
+  .btn{ border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); padding:8px 14px; border-radius:9px; font-weight:600; font-size:13.5px; transition:background .12s,border-color .12s; }
+  .btn:hover{ background:var(--surface-2); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .btn.primary:hover{ filter:brightness(1.06); }
+  .btn.ghost{ border-color:transparent; background:transparent; }
+  .btn.ghost:hover{ background:var(--surface-2); }
+  .btn.sm{ padding:6px 11px; font-size:12.5px; border-radius:7px; }
+  .btn.danger{ color:var(--critical); }
+  .btn:disabled{ opacity:.45; cursor:default; }
+
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+
+  /* ---------- applicant: search ---------- */
+  .hero{ margin-bottom:26px; }
+  .hero h1{ font-size:32px; margin-bottom:8px; }
+  .hero p{ color:var(--ink-muted); font-size:15px; max-width:52ch; }
+
+  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; padding:22px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:6px; }
+  .field select, .field input{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line-strong);
+    background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:14px;
+  }
+  .field.span2{ grid-column:span 2; }
+  .form-actions{ padding:0 22px 22px; display:flex; justify-content:flex-end; }
+
+  .listings-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; margin-top:18px; }
+  .listing-card{ overflow:hidden; cursor:pointer; transition:transform .14s, box-shadow .14s; }
+  .listing-card:hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(28,33,31,.06), 0 14px 28px -10px rgba(28,33,31,.22); }
+  .listing-photo{ height:140px; position:relative; }
+  .listing-photo .price-tag{
+    position:absolute; bottom:10px; left:10px; background:rgba(20,23,21,.72); color:#fff;
+    padding:5px 10px; border-radius:8px; font-family:'IBM Plex Mono'; font-size:13px; font-weight:600;
+  }
+  .listing-body{ padding:14px 16px 16px; }
+  .listing-body h3{ font-size:16px; font-weight:600; margin-bottom:3px; }
+  .listing-loc{ color:var(--ink-muted); font-size:13px; margin-bottom:10px; }
+  .listing-specs{ display:flex; gap:10px; font-size:12.5px; color:var(--ink-muted); }
+
+  .detail-photo{ height:260px; border-radius:14px; margin-bottom:20px; }
+  .detail-grid{ display:grid; grid-template-columns:1.6fr 1fr; gap:28px; align-items:start; }
+  .amenity-list{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .amenity-list span{ background:var(--surface-2); border:1px solid var(--line); border-radius:99px; padding:5px 11px; font-size:12.5px; color:var(--ink-muted); }
+  .price-box{ padding:20px; }
+  .price-box .amt{ font-family:'IBM Plex Mono'; font-size:28px; font-weight:600; }
+  .price-box .per{ color:var(--ink-muted); font-size:13px; margin-top:2px; }
+
+  .stepper{ display:flex; gap:8px; margin-bottom:22px; }
+  .stepper .step{ flex:1; height:4px; border-radius:99px; background:var(--line); }
+  .stepper .step.done{ background:var(--accent); }
+
+  .check-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border:1px solid var(--line); border-radius:11px; margin-bottom:10px; background:var(--surface); }
+  .check-row .cr-label{ font-weight:600; font-size:14px; }
+  .check-row .cr-sub{ font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+
+  .app-list-item{ display:flex; gap:14px; padding:16px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:12px; align-items:center; }
+  .app-thumb{ width:56px; height:56px; border-radius:9px; flex:none; }
+  .app-info{ flex:1; min-width:0; }
+  .app-info h4{ font-family:'IBM Plex Sans'; font-size:14.5px; font-weight:600; margin:0 0 2px; }
+  .app-info .meta{ font-size:12.5px; color:var(--ink-muted); }
+
+  .applicant-card{ display:flex; gap:14px; padding:16px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:12px; }
+  .avatar{ width:44px; height:44px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Fraunces'; font-size:16px; color:#fff; background:linear-gradient(155deg, var(--accent), var(--gold)); }
+  .applicant-info{ flex:1; min-width:0; }
+  .applicant-info .name-row{ display:flex; align-items:center; gap:8px; margin-bottom:3px; flex-wrap:wrap; }
+  .applicant-info .name-row h4{ font-family:'IBM Plex Sans'; font-size:15px; font-weight:600; }
+  .applicant-facts{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-muted); margin-top:6px; }
+  .applicant-actions{ display:flex; gap:8px; flex:none; align-self:center; }
+
+  .empty{ text-align:center; padding:48px 20px; color:var(--ink-muted); }
+  .empty .glyph{ font-size:28px; margin-bottom:10px; }
+
+  .breadcrumb{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-muted); margin-bottom:16px; }
+  .breadcrumb button{ background:none; border:none; color:var(--accent); font-weight:600; padding:0; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px);
+    background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:10px;
+    font-size:13.5px; font-weight:500; box-shadow:0 10px 30px -8px rgba(0,0,0,.4);
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:100;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width: 760px){
+    .sidebar{ display:none; }
+    main{ padding:20px 16px 48px; }
+    .detail-grid{ grid-template-columns:1fr; }
+    .mode-switch button{ padding:7px 10px; font-size:12.5px; }
+  }
+</style>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark"><span>LM</span></div>
+    <div class="word">
+      <div class="wordmark"><span class="lease">Lease</span><span class="match">Match</span></div>
+      <div class="tagline">Trusted Leasing &middot; Prototype</div>
+    </div>
+  </div>
+  <div class="mode-switch" id="modeSwitch">
+    <button data-mode="applicant">I'm looking for a home</button>
+    <button data-mode="provider">I manage properties</button>
+  </div>
+  <div class="demo-tag">Working demo &middot; sample data</div>
+</div>
+
+<div class="shell" id="shell"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= mock data ================= */
+const PHOTO = (i, h=140) => {
+  const hues = [172,150,205,28,190,340,90,255];
+  const h1 = hues[i % hues.length], h2 = hues[(i+3) % hues.length];
+  return `background:linear-gradient(135deg, hsl(${h1} 38% 78%), hsl(${h2} 30% 62%)); height:${h}px; border-radius:12px;`;
+};
+
+const properties = [
+  {id:'p1', title:'1BR in Marina Promenade', loc:'Dubai Marina', type:'Apartment', price:95000, period:'yr', beds:1, baths:2, sqft:820, furnished:'Furnished', provider:'Marina Property Management', daysVacant:41,
+   amenities:['Pool','Gym','Covered parking','Marina view','24/7 security'],
+   desc:'A bright one-bedroom on the 14th floor with unobstructed marina views, recently renovated kitchen, and access to the building\'s waterfront promenade.'},
+  {id:'p2', title:'2BR Townhouse, Cluster C', loc:'JVC', type:'Townhouse', price:78000, period:'yr', beds:2, baths:3, sqft:1450, furnished:'Unfurnished', provider:'Meadows Estates', daysVacant:12,
+   amenities:['Private garden','Community pool','Maid\'s room','Covered parking'],
+   desc:'Corner-unit townhouse with a private garden, close to Circle Mall. Landlord open to a light renovation allowance for the right tenant.'},
+  {id:'p3', title:'Studio, Business Bay Tower', loc:'Business Bay', type:'Studio', price:58000, period:'yr', beds:0, baths:1, sqft:480, furnished:'Furnished', provider:'Meadows Estates', daysVacant:67,
+   amenities:['Gym','Pool','Canal view','Metro access'],
+   desc:'Compact, efficient studio five minutes\' walk from Business Bay metro. Fully furnished, utilities not included.'},
+  {id:'p4', title:'3BR Villa, District 7', loc:'Al Barsha', type:'Villa', price:165000, period:'yr', beds:3, baths:4, sqft:2600, furnished:'Unfurnished', provider:'Marina Property Management', daysVacant:5,
+   amenities:['Private pool','Garden','Maid\'s room','Driver\'s room','Covered parking x2'],
+   desc:'Detached villa on a quiet cul-de-sac, recently repainted. Close to two international schools.'},
+  {id:'p5', title:'1BR in Burj Views', loc:'Downtown Dubai', type:'Apartment', price:110000, period:'yr', beds:1, baths:1, sqft:750, furnished:'Furnished', provider:'Skyline Leasing Co.', daysVacant:23,
+   amenities:['Burj Khalifa view','Pool','Gym','Concierge'],
+   desc:'High-floor unit with a direct Burj Khalifa view. Building fees included in rent.'},
+  {id:'p6', title:'Convertible Studio, Al Wasl', loc:'Jumeirah', type:'Convertible studio', price:64000, period:'yr', beds:0, baths:1, sqft:520, furnished:'Unfurnished', provider:'Skyline Leasing Co.', daysVacant:88,
+   amenities:['Pool','Gym','Pet friendly'],
+   desc:'Partitioned studio with a separate sleeping area, in a quiet low-rise on Al Wasl Road. Landlord is motivated — unit has been vacant since June.'},
+];
+
+const applicantNames = ['Amira K.','David O.','Fatima R.','James T.','Layla H.','Noah S.','Sara M.','Yusuf A.'];
+const occupations = ['Marketing professional','Software engineer','Healthcare professional','Finance professional','Consultant','Operations manager','Educator','Design professional'];
+
+function makeApplicants(propertyId, n, seedOffset){
+  const list = [];
+  for(let i=0;i<n;i++){
+    const idx = (seedOffset+i) % applicantNames.length;
+    const incomeBand = [22000,28000,34000,41000,52000][ (seedOffset+i) % 5 ];
+    list.push({
+      id: propertyId+'-a'+i,
+      name: applicantNames[idx],
+      occupation: occupations[idx],
+      income: incomeBand,
+      verified: (i % 3 !== 0),
+      moveIn: ['This month','Within 2 weeks','Next month','Flexible'][(seedOffset+i)%4],
+      status: 'pending',
+      propertyId
+    });
+  }
+  return list;
+}
+
+let applicants = [];
+properties.forEach((p, i) => { applicants = applicants.concat(makeApplicants(p.id, 2 + (i%3), i*2)); });
+
+/* ================= state ================= */
+const state = {
+  mode: 'applicant',
+  applicant: { view:'search', filters:null, matches:[], selectedProperty:null, verifyChecks:{id:false, income:false}, myApplications:[] },
+  provider: { view:'overview', selectedProperty:null },
+};
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function money(n){ return 'AED ' + n.toLocaleString('en-US'); }
+
+/* ================= mode switch ================= */
+document.getElementById('modeSwitch').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-mode]');
+  if(!btn) return;
+  state.mode = btn.dataset.mode;
+  render();
+});
+
+/* ================= applicant views ================= */
+function renderApplicantSearch(){
+  return `
+  <div class="applicant-main">
+    <div class="hero">
+      <h1>Find your next home</h1>
+      <p>Tell us what you're looking for. We'll match you against listings from verified landlords and property managers.</p>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="field"><label>Property type</label>
+          <select id="f-type"><option>Any</option><option>Apartment</option><option>Studio</option><option>Convertible studio</option><option>Townhouse</option><option>Villa</option></select>
+        </div>
+        <div class="field"><label>Location</label>
+          <select id="f-loc"><option>Any</option><option>Dubai Marina</option><option>JVC</option><option>Business Bay</option><option>Al Barsha</option><option>Downtown Dubai</option><option>Jumeirah</option></select>
+        </div>
+        <div class="field"><label>Bedrooms</label>
+          <select id="f-beds"><option>Any</option><option>Studio</option><option>1</option><option>2</option><option>3+</option></select>
+        </div>
+        <div class="field"><label>Budget (yearly, AED)</label>
+          <select id="f-budget"><option>Any</option><option>Up to 60,000</option><option>Up to 90,000</option><option>Up to 120,000</option><option>Up to 180,000</option></select>
+        </div>
+        <div class="field"><label>Furnishing</label>
+          <select id="f-furn"><option>Any</option><option>Furnished</option><option>Unfurnished</option></select>
+        </div>
+        <div class="field"><label>Move-in timeframe</label>
+          <select id="f-move"><option>Flexible</option><option>This month</option><option>Within 2 weeks</option><option>Next month</option></select>
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn primary" id="searchBtn">Search listings</button></div>
+    </div>
+  </div>`;
+}
+
+function matchProperties(filters){
+  return properties.filter(p=>{
+    if(filters.type!=='Any' && p.type!==filters.type) return false;
+    if(filters.loc!=='Any' && p.loc!==filters.loc) return false;
+    if(filters.beds==='Studio' && p.beds!==0) return false;
+    if(filters.beds==='1' && p.beds!==1) return false;
+    if(filters.beds==='2' && p.beds!==2) return false;
+    if(filters.beds==='3+' && p.beds<3) return false;
+    if(filters.furn!=='Any' && p.furnished!==filters.furn) return false;
+    if(filters.budget!=='Any'){
+      const cap = parseInt(filters.budget.replace(/\D/g,''));
+      if(p.price > cap) return false;
+    }
+    return true;
+  });
+}
+
+function renderApplicantMatches(){
+  const list = state.applicant.matches;
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="search">&larr; Refine search</button></div>
+    <div class="section-head">
+      <h2>${list.length} listing${list.length===1?'':'s'} match your criteria</h2>
+      <span class="sub">Updated live from provider inventory</span>
+    </div>
+    ${list.length===0 ? emptyState('No exact matches yet','Try widening your budget or location — or check back, new listings are added daily.') : `
+    <div class="listings-grid">
+      ${list.map((p,i)=>`
+        <div class="card listing-card" data-open-listing="${p.id}">
+          <div class="listing-photo" style="${PHOTO(i)}"><div class="price-tag">${money(p.price)}/${p.period}</div></div>
+          <div class="listing-body">
+            <h3>${p.title}</h3>
+            <div class="listing-loc">${p.loc}</div>
+            <div class="listing-specs">
+              <span>${p.beds===0?'Studio':p.beds+' bed'}</span><span>&middot;</span>
+              <span>${p.baths} bath</span><span>&middot;</span>
+              <span>${p.sqft} sqft</span>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`}
+  </div>`;
+}
+
+function renderApplicantDetail(){
+  const p = state.applicant.selectedProperty;
+  const idx = properties.findIndex(x=>x.id===p.id);
+  return `
+  <div class="applicant-main">
+    <div class="breadcrumb"><button data-nav="matches">&larr; Back to matches</button></div>
+    <div class="detail-photo" style="${PHOTO(idx,260)}"></div>
+    <div class="detail-grid">
+      <div>
+        <h1 style="font-size:26px;">${p.title}</h1>
+        <div class="listing-loc" style="margin-top:6px; font-size:14px;">${p.loc} &middot; Listed by ${p.provider}</div>
+        <p style="margin-top:16px; color:var(--ink-muted); max-width:60ch;">${p.desc}</p>
+        <div class="listing-specs" style="margin-top:18px; font-size:13.5px; gap:16px;">
+          <span><strong>${p.beds===0?'Studio':p.beds+' bed'}</strong></span>
+          <span><strong>${p.baths}</strong> bath</span>
+          <span><strong>${p.sqft}</strong> sqft</span>
+          <span><strong>${p.furnished}</strong></span>
+        </div>
+        <div class="amenity-list">${p.amenities.map(a=>`<span>${a}</span>`).join('')}</div>
+      </div>
+      <div class="card price-box">
+        <div class="amt">${money(p.price)}</div>
+        <div class="per">per year &middot; ${p.type}</div>
+        <button class="btn primary" style="width:100%; margin-top:16px;" id="applyBtn">Apply to lease</button>
+        <div style="font-size:12px; color:var(--ink-faint); margin-top:10px;">You'll verify your profile once, before this application is sent.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderApplicantVerify(){
+  const c = state.applicant.verifyChecks;
+  const p = state.applicant.selectedProperty;
+  return `
+  <div class="applicant-main">
+    <div class="stepper"><div class="step done"></div><div class="step done"></div><div class="step ${c.id&&c.income?'done':''}"></div></div>
+    <h2 style="font-size:22px; margin-bottom:6px;">Verify your profile</h2>
+    <p style="color:var(--ink-muted); margin-bottom:20px;">This unlocks proposals from landlords and property managers. In the live product this step runs a real identity and income check; here it's simulated.</p>
+    <div class="check-row">
+      <div><div class="cr-label">Identity verification</div><div class="cr-sub">Emirates ID / passport, matched automatically</div></div>
+      <button class="btn sm ${c.id?'primary':''}" id="chk-id">${c.id?'Verified':'Verify'}</button>
+    </div>
+    <div class="check-row">
+      <div><div class="cr-label">Income verification</div><div class="cr-sub">Confirms you meet this listing's affordability guideline</div></div>
+      <button class="btn sm ${c.income?'primary':''}" id="chk-income">${c.income?'Verified':'Verify'}</button>
+    </div>
+    <button class="btn primary" style="margin-top:8px;" id="submitApp" ${(c.id&&c.income)?'':'disabled'}>Submit application to ${p.provider}</button>
+  </div>`;
+}
+
+function renderApplicantConfirm(){
+  return `
+  <div class="applicant-main">
+    <div class="empty" style="padding-top:60px;">
+      <div class="glyph">&#10003;</div>
+      <h2 style="font-size:22px; margin-bottom:8px;">Application submitted</h2>
+      <p>The property manager has been notified. You can track the status of every application from "My applications."</p>
+      <button class="btn primary" style="margin-top:18px;" data-nav="myapps">View my applications</button>
+    </div>
+  </div>`;
+}
+
+function renderApplicantMyApps(){
+  const apps = state.applicant.myApplications;
+  return `
+  <div class="applicant-main">
+    <div class="section-head"><h2>My applications</h2><span class="sub">Live status, synced with the provider</span></div>
+    ${apps.length===0 ? emptyState('No applications yet','Once you apply to a listing, you\'ll be able to track its status here.') :
+      apps.map(a=>{
+        const p = properties.find(x=>x.id===a.propertyId);
+        const idx = properties.findIndex(x=>x.id===a.propertyId);
+        return `<div class="app-list-item">
+          <div class="app-thumb" style="${PHOTO(idx,56).replace('height:56px','height:56px')}"></div>
+          <div class="app-info">
+            <h4>${p.title}</h4>
+            <div class="meta">${p.loc} &middot; ${money(p.price)}/yr &middot; ${p.provider}</div>
+          </div>
+          ${statusPill(a.status)}
+        </div>`;
+      }).join('')}
+  </div>`;
+}
+
+function statusPill(status){
+  const map = {
+    pending:['pending','Under review'],
+    review:['review','Documents under inspection'],
+    clarify:['clarify','Clarification requested'],
+    accepted:['accepted','Accepted'],
+    declined:['declined','Declined'],
+  };
+  const [cls,label] = map[status] || map.pending;
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+function emptyState(title, sub){
+  return `<div class="card empty"><div class="glyph">&#8982;</div><strong style="color:var(--ink); font-size:15px;">${title}</strong><div style="margin-top:6px; max-width:42ch; margin-inline:auto;">${sub}</div></div>`;
+}
+
+const applicantTabs = [
+  {id:'search', label:'Find a home'},
+  {id:'myapps', label:'My applications'},
+];
+
+function renderApplicantTabsBar(active){
+  return `<div style="display:flex; gap:6px; padding:10px 24px 0; max-width:960px; margin:0 auto;">
+    ${applicantTabs.map(t=>`<button class="btn sm ${active===t.id?'primary':'ghost'}" data-nav="${t.id}">${t.label}</button>`).join('')}
+  </div>`;
+}
+
+function renderApplicant(){
+  const v = state.applicant.view;
+  let bar = (v==='search'||v==='myapps') ? renderApplicantTabsBar(v) : '';
+  let body = '';
+  if(v==='search') body = renderApplicantSearch();
+  else if(v==='matches') body = renderApplicantMatches();
+  else if(v==='detail') body = renderApplicantDetail();
+  else if(v==='verify') body = renderApplicantVerify();
+  else if(v==='confirm') body = renderApplicantConfirm();
+  else if(v==='myapps') body = renderApplicantMyApps();
+  return `<div style="flex:1;">${bar}${body}</div>`;
+}
+
+/* ================= provider views ================= */
+const providerNav = [
+  {id:'overview', label:'Overview'},
+  {id:'properties', label:'Properties'},
+];
+
+function providerKPIs(){
+  const vacant = properties.filter(p=>true);
+  const avgDaysVacant = Math.round(properties.reduce((s,p)=>s+p.daysVacant,0)/properties.length);
+  const totalApplicants = applicants.length;
+  const verifiedShare = Math.round(100*applicants.filter(a=>a.verified).length/applicants.length);
+  return `
+  <div class="kpis">
+    <div class="kpi"><div class="label">Vacant units</div><div class="value mono">${properties.length}</div><div class="delta warn">3 over 60 days vacant</div></div>
+    <div class="kpi"><div class="label">Avg. days vacant</div><div class="value mono">${avgDaysVacant}</div><div class="delta good">&darr; 18 vs. last quarter</div></div>
+    <div class="kpi"><div class="label">Active applicants</div><div class="value mono">${totalApplicants}</div><div class="delta good">${verifiedShare}% pre-verified</div></div>
+    <div class="kpi"><div class="label">Avg. time-to-lease</div><div class="value mono">2.3<span style="font-size:15px;">d</span></div><div class="delta good">from first match to signature</div></div>
+  </div>`;
+}
+
+function renderProviderOverview(){
+  const stale = properties.filter(p=>p.daysVacant>30).sort((a,b)=>b.daysVacant-a.daysVacant);
+  return `
+  <div class="section-head"><h2>Portfolio overview</h2><span class="sub">Marina Property Management &middot; Meadows Estates &middot; Skyline Leasing Co. (sample portfolio)</span></div>
+  ${providerKPIs()}
+  <div class="section-head"><h2 style="font-size:17px;">Needs attention</h2></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Unit</th><th>Location</th><th>Days vacant</th><th>Applicants</th><th>Status</th></tr></thead>
+    <tbody>
+      ${stale.map(p=>{
+        const n = applicants.filter(a=>a.propertyId===p.id).length;
+        return `<tr data-open-property="${p.id}">
+          <td>${p.title}</td><td>${p.loc}</td>
+          <td class="mono">${p.daysVacant}</td>
+          <td class="mono">${n}</td>
+          <td><span class="pill vacant">Vacant</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderProviderProperties(){
+  return `
+  <div class="section-head"><h2>Properties</h2><span class="sub">${properties.length} units under management</span></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Unit</th><th>Location</th><th>Rent (yr)</th><th>Days vacant</th><th>Applicants</th><th></th></tr></thead>
+    <tbody>
+      ${properties.map(p=>{
+        const n = applicants.filter(a=>a.propertyId===p.id).length;
+        return `<tr data-open-property="${p.id}">
+          <td>${p.title}</td><td>${p.loc}</td>
+          <td class="mono">${money(p.price)}</td>
+          <td class="mono">${p.daysVacant}</td>
+          <td class="mono">${n}</td>
+          <td><span class="pill ${p.daysVacant>30?'vacant':'offer'}">${p.daysVacant>30?'Vacant':'Under review'}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderProviderApplicants(){
+  const p = state.provider.selectedProperty;
+  const list = applicants.filter(a=>a.propertyId===p.id);
+  return `
+  <div class="breadcrumb"><button data-nav-provider="properties">&larr; All properties</button></div>
+  <div class="section-head">
+    <h2>${p.title}</h2>
+    <span class="sub">${p.loc} &middot; ${money(p.price)}/yr &middot; vacant ${p.daysVacant} days</span>
+  </div>
+  ${list.length===0 ? emptyState('No applicants yet','As tenants apply, verified profiles will appear here for review.') :
+  list.map(a=>`
+    <div class="applicant-card">
+      <div class="avatar">${a.name[0]}</div>
+      <div class="applicant-info">
+        <div class="name-row">
+          <h4>${a.name}</h4>
+          ${a.verified?'<span class="pill verified">&#9733; Verified</span>':'<span class="pill pending">Verification pending</span>'}
+          ${statusPill(mapApplicantStatus(a.status))}
+        </div>
+        <div class="applicant-facts">
+          <span>${a.occupation}</span>
+          <span class="mono">${money(a.income)}/mo gross</span>
+          <span>Move-in: ${a.moveIn}</span>
+        </div>
+      </div>
+      <div class="applicant-actions">
+        ${a.status==='pending' ? `
+          <button class="btn sm primary" data-action="accept" data-aid="${a.id}">Accept</button>
+          <button class="btn sm" data-action="clarify" data-aid="${a.id}">Clarify</button>
+          <button class="btn sm danger" data-action="decline" data-aid="${a.id}">Decline</button>
+        ` : `<button class="btn sm ghost" disabled>${a.status[0].toUpperCase()+a.status.slice(1)}</button>`}
+      </div>
+    </div>`).join('')}
+  `;
+}
+function mapApplicantStatus(s){ return s==='pending' ? 'review' : s; }
+
+function renderProvider(){
+  const v = state.provider.view;
+  let body = '';
+  if(v==='overview') body = renderProviderOverview();
+  else if(v==='properties') body = renderProviderProperties();
+  else if(v==='applicants') body = renderProviderApplicants();
+
+  return `
+  <div class="sidebar">
+    <div class="navlabel">Workspace</div>
+    ${providerNav.map(n=>`<button data-nav-provider="${n.id}" class="${(v===n.id || (n.id==='properties'&&v==='applicants'))?'active':''}"><span class="dot"></span>${n.label}</button>`).join('')}
+  </div>
+  <main>${body}</main>`;
+}
+
+/* ================= render + events ================= */
+function render(){
+  document.querySelectorAll('#modeSwitch button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.mode));
+  const shell = document.getElementById('shell');
+  shell.innerHTML = state.mode==='applicant' ? `<main style="flex:1; padding:0;">${renderApplicant()}</main>` : renderProvider();
+  bindEvents();
+}
+
+function bindEvents(){
+  const shell = document.getElementById('shell');
+
+  shell.querySelector('#searchBtn')?.addEventListener('click', ()=>{
+    const filters = {
+      type: val('#f-type'), loc: val('#f-loc'), beds: val('#f-beds'),
+      budget: val('#f-budget'), furn: val('#f-furn'), move: val('#f-move'),
+    };
+    state.applicant.filters = filters;
+    state.applicant.matches = matchProperties(filters);
+    state.applicant.view = 'matches';
+    render();
+  });
+
+  shell.querySelectorAll('[data-open-listing]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.applicant.selectedProperty = properties.find(p=>p.id===el.dataset.openListing);
+      state.applicant.view = 'detail';
+      render();
+    });
+  });
+
+  shell.querySelector('#applyBtn')?.addEventListener('click', ()=>{
+    state.applicant.verifyChecks = {id:false, income:false};
+    state.applicant.view = 'verify';
+    render();
+  });
+
+  shell.querySelector('#chk-id')?.addEventListener('click', ()=>{ state.applicant.verifyChecks.id = true; render(); toast('Identity verified'); });
+  shell.querySelector('#chk-income')?.addEventListener('click', ()=>{ state.applicant.verifyChecks.income = true; render(); toast('Income verified'); });
+
+  shell.querySelector('#submitApp')?.addEventListener('click', ()=>{
+    const p = state.applicant.selectedProperty;
+    state.applicant.myApplications.unshift({propertyId:p.id, status:'review'});
+    state.applicant.view = 'confirm';
+    render();
+  });
+
+  shell.querySelectorAll('[data-nav]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.applicant.view = el.dataset.nav; render(); });
+  });
+
+  shell.querySelectorAll('[data-open-property]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.provider.selectedProperty = properties.find(p=>p.id===el.dataset.openProperty);
+      state.provider.view = 'applicants';
+      render();
+    });
+  });
+
+  shell.querySelectorAll('[data-nav-provider]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.provider.view = el.dataset.navProvider; render(); });
+  });
+
+  shell.querySelectorAll('[data-action]').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const a = applicants.find(x=>x.id===el.dataset.aid);
+      const action = el.dataset.action;
+      a.status = action==='accept' ? 'accepted' : action==='decline' ? 'declined' : 'clarify';
+      const label = action==='accept' ? 'Applicant accepted — lease flow started' : action==='decline' ? 'Applicant declined' : 'Clarification requested from applicant';
+      toast(label);
+      render();
+    });
+  });
+
+  function val(sel){ return shell.querySelector(sel).value; }
+}
+
+render();
+</script>

@@ -1,0 +1,365 @@
+<!doctype html>
+<title>LeaseMatch — Landlord</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F4F9; --surface:#FFFFFF; --surface-2:#F0EEF6;
+    --ink:#131A2C; --ink-muted:#5B5F72; --ink-faint:#8B8FA0;
+    --line:#E1DEEA; --line-strong:#CBC7DA;
+    --accent:#0E2A4D; --accent-ink:#FFFFFF; --accent-soft:#E7EAF2; --accent-soft-ink:#0E2A4D;
+    --gold:#A8792F; --gold-soft:#F3E9D6;
+    --good:#2F7D4F; --good-soft:#E4F1E7;
+    --role:var(--gold); --role-soft:var(--gold-soft); --role-ink:#3A2A0F;
+    --shadow: 0 1px 2px rgba(19,26,44,.04), 0 6px 20px -8px rgba(19,26,44,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+      --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+      --line:#2A2E3C; --line-strong:#383D4E;
+      --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+      --gold:#D4AC63; --gold-soft:#332A18; --role-ink:#0C1213;
+      --good:#6FBF8B; --good-soft:#1B2F22;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1219; --surface:#171A24; --surface-2:#1B1F2B;
+    --ink:#EAEAF2; --ink-muted:#9EA1B4; --ink-faint:#686C80;
+    --line:#2A2E3C; --line-strong:#383D4E;
+    --accent:#7C9BD4; --accent-ink:#0B1220; --accent-soft:#1E2A42; --accent-soft-ink:#9DB6E4;
+    --gold:#D4AC63; --gold-soft:#332A18; --role-ink:#0C1213;
+    --good:#6FBF8B; --good-soft:#1B2F22;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3{ font-family:'Fraunces',Georgia,serif; text-wrap:balance; margin:0; letter-spacing:-0.01em; }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+  button{ font-family:inherit; font-size:inherit; cursor:pointer; }
+  :focus-visible{ outline:2px solid var(--role); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 22px; background:var(--surface); border-bottom:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .mark{ width:30px; height:30px; border:2px solid var(--ink); border-radius:3px; position:relative; overflow:hidden; flex:none; }
+  .mark::before{ content:""; position:absolute; inset:0 50% 0 0; background:var(--accent); }
+  .mark::after{ content:""; position:absolute; inset:0 0 0 50%; background:var(--gold); }
+  .mark span{ position:relative; z-index:1; display:flex; align-items:center; justify-content:center; height:100%; font-family:'Fraunces'; font-weight:600; font-size:13px; color:#fff; }
+  .wordmark{ font-family:'Fraunces'; font-weight:600; font-size:18px; }
+  .wordmark .lease{ color:var(--accent); } .wordmark .match{ color:var(--gold); }
+  .role-tag{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--role-ink); background:var(--role-soft); padding:5px 10px; border-radius:6px; }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:32px 20px 60px; }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+
+  .deal-card{ display:flex; gap:14px; padding:16px; align-items:center; margin-bottom:24px; }
+  .deal-photo{ width:64px; height:64px; border-radius:11px; flex:none; background:linear-gradient(135deg, hsl(172 38% 78%), hsl(28 30% 62%)); }
+  .deal-info h2{ font-size:17px; }
+  .deal-info .sub{ color:var(--ink-muted); font-size:13px; margin-top:2px; }
+
+  .stepper{ display:flex; gap:7px; margin-bottom:8px; }
+  .stepper .step{ flex:1; height:5px; border-radius:99px; background:var(--line); }
+  .stepper .step.done{ background:var(--role); }
+  .stage-label{ font-size:12px; color:var(--ink-muted); margin-bottom:26px; }
+  .stage-label b{ color:var(--ink); }
+
+  .panel{ padding:24px; margin-bottom:18px; }
+  .panel .eyebrow{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+  .panel h3{ font-size:19px; margin-bottom:6px; }
+  .panel p.desc{ color:var(--ink-muted); font-size:13.5px; margin:0 0 18px; max-width:48ch; }
+
+  .lease-row{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .lease-row:last-child{ border-bottom:none; }
+  .lease-row .k{ color:var(--ink-muted); } .lease-row .v{ font-weight:600; font-family:'IBM Plex Mono'; }
+
+  .applicant-mini{ display:flex; gap:12px; align-items:center; padding:13px 14px; border:1px solid var(--line); border-radius:11px; background:var(--surface-2); margin-bottom:16px; }
+  .avatar{ width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Fraunces'; color:#fff; background:linear-gradient(155deg, var(--accent), var(--gold)); flex:none; }
+  .applicant-mini .n{ font-weight:600; font-size:14px; }
+  .applicant-mini .s{ font-size:12px; color:var(--ink-muted); }
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:11.5px; font-weight:600; background:var(--gold-soft); color:var(--gold); margin-left:auto; }
+
+  .sig-preview{ border:1px solid var(--line); border-radius:12px; padding:20px; background:var(--surface-2); text-align:center; margin-bottom:16px; }
+  .sig-preview .mark-sig{ font-family:'Fraunces'; font-style:italic; font-size:26px; color:var(--gold); }
+  .sig-preview .cap{ font-size:11.5px; color:var(--ink-faint); margin-top:8px; }
+
+  .receipt-preview{ border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--surface-2); display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .receipt-preview .ic{ font-size:20px; }
+
+  .btn{ border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); padding:11px 18px; border-radius:10px; font-weight:600; font-size:14px; transition:background .12s; }
+  .btn:hover{ background:var(--surface-2); }
+  .btn.primary{ background:var(--role); border-color:var(--role); color:var(--role-ink); }
+  .btn.primary:hover{ filter:brightness(1.06); }
+  .btn.ghost{ border-color:transparent; background:transparent; }
+  .btn:disabled{ opacity:.4; cursor:default; }
+  .btn.block{ width:100%; }
+
+  .waiting{ text-align:center; padding:20px 10px 6px; }
+  .waiting .spin{ width:38px; height:38px; border-radius:50%; border:3px solid var(--accent-soft); border-top-color:var(--accent); margin:0 auto 14px; animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .waiting .spin{ animation:none; } }
+
+  .done-box{ text-align:center; padding:8px 10px 4px; }
+  .done-icon{ width:56px; height:56px; border-radius:14px; background:var(--good-soft); color:var(--good); display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px; }
+
+  .presenter{ border:1px dashed var(--line-strong); border-radius:12px; padding:16px 18px; background:var(--surface-2); }
+  .presenter .lbl{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }
+  .presenter select{ width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); font-family:inherit; font-size:13.5px; margin-bottom:8px; }
+  .presenter .row{ display:flex; gap:8px; }
+  .presenter .row .btn{ flex:1; padding:8px 10px; font-size:12.5px; }
+
+  .toast{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:10px; font-size:13.5px; font-weight:500; box-shadow:0 10px 30px -8px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:.2s; z-index:100; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .notice{ display:flex; gap:10px; padding:12px 14px; border-radius:10px; background:var(--accent-soft); color:var(--accent-soft-ink); font-size:12.5px; margin-top:16px; }
+  .notice .ic{ font-size:15px; flex:none; }
+  .warning{ display:flex; gap:10px; padding:13px 15px; border-radius:10px; background:#FBEEDA; border:1px solid #E8C58A; color:#7A4E0E; font-size:12.5px; line-height:1.5; margin-top:14px; }
+  .warning .ic{ font-size:16px; flex:none; }
+  .warning b{ display:block; margin-bottom:2px; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .warning{ background:#332811; border-color:#5A4419; color:#E0A94C; } }
+  :root[data-theme="dark"] .warning{ background:#332811; border-color:#5A4419; color:#E0A94C; }
+
+  .chat-fab{
+    position:fixed; bottom:20px; right:20px; width:54px; height:54px; border-radius:50%;
+    background:var(--role); color:var(--role-ink); border:none; font-size:22px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 8px 22px -6px rgba(19,26,44,.4); z-index:60;
+  }
+  .chat-fab .badge{
+    position:absolute; top:-3px; right:-3px; width:18px; height:18px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .chat-panel{
+    position:fixed; bottom:84px; right:20px; width:min(340px, calc(100vw - 40px)); max-height:min(480px, calc(100vh - 140px));
+    background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 20px 50px -14px rgba(19,26,44,.35);
+    display:none; flex-direction:column; overflow:hidden; z-index:61;
+  }
+  .chat-panel.open{ display:flex; }
+  .chat-head{ padding:13px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; background:var(--surface-2); }
+  .chat-head .who{ flex:1; }
+  .chat-head .who .n{ font-weight:700; font-size:13.5px; }
+  .chat-head .who .s{ font-size:11px; color:var(--ink-muted); }
+  .chat-head button{ background:none; border:none; color:var(--ink-faint); font-size:16px; padding:2px; }
+  .chat-body{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:9px; min-height:200px; }
+  .msg{ max-width:80%; padding:8px 11px; border-radius:12px; font-size:13px; line-height:1.4; }
+  .msg.them{ align-self:flex-start; background:var(--surface-2); border-bottom-left-radius:4px; }
+  .msg.me{ align-self:flex-end; background:var(--role); color:var(--role-ink); border-bottom-right-radius:4px; }
+  .typing{ align-self:flex-start; font-size:12px; color:var(--ink-faint); font-style:italic; }
+  .chat-input{ display:flex; gap:8px; padding:11px; border-top:1px solid var(--line); }
+  .chat-input input{ flex:1; padding:9px 11px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:13px; }
+  .chat-input button{ background:var(--role); color:var(--role-ink); border:none; border-radius:9px; padding:0 14px; font-weight:600; font-size:13px; }
+  .chat-nudge{ font-size:12px; color:var(--ink-faint); margin-top:6px; }
+  .chat-nudge a{ color:var(--accent); font-weight:600; cursor:pointer; text-decoration:none; }
+</style>
+
+<div class="topbar">
+  <div class="brand"><div class="mark"><span>LM</span></div><div class="wordmark"><span class="lease">Lease</span><span class="match">Match</span></div></div>
+  <div class="role-tag">Landlord / provider view</div>
+</div>
+
+<div class="wrap">
+  <div class="card deal-card">
+    <div class="deal-photo"></div>
+    <div class="deal-info">
+      <h2>1BR in Marina Promenade</h2>
+      <div class="sub">Dubai Marina &middot; AED 95,000/yr &middot; Applicant: Sara M.</div>
+    </div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="card panel" id="panel"></div>
+
+  <div class="presenter">
+    <div class="lbl">Presenter control — not part of the provider experience</div>
+    <select id="jump"></select>
+    <div class="row">
+      <button class="btn sm" id="resetBtn">Reset to start</button>
+    </div>
+    <div style="font-size:11.5px; color:var(--ink-faint); margin-top:10px;">This file runs on its own — it can't see the tenant file. Use this to keep both windows on the same stage while you present.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<button class="chat-fab" id="chatFab">&#128172;<span class="badge" id="chatBadge">2</span></button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="avatar" style="width:30px; height:30px; font-size:13px;">S</div>
+    <div class="who"><div class="n">Sara M.</div><div class="s">Amending the lease draft &middot; chat-only, no personal contact info</div></div>
+    <button id="chatClose">&#10005;</button>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input">
+    <input id="chatInput" type="text" placeholder="Reply about the draft&hellip;" maxlength="180">
+    <button id="chatSend">Send</button>
+  </div>
+</div>
+
+<script>
+const deal = { rent:95000, deposit:4750, fee:2375, installment:23750, tenant:'Sara M.' };
+const stages = ['pending_draft','awaiting_signature','awaiting_finalize','awaiting_payment','awaiting_confirmation','finalized'];
+const stageNames = {
+  pending_draft:'Draft the lease agreement', awaiting_signature:'Awaiting tenant signature',
+  awaiting_finalize:'Review signature &amp; finalize', awaiting_payment:'Awaiting tenant payment',
+  awaiting_confirmation:'Confirm receipt of payment', finalized:'Lease finalized',
+};
+let stage = localStorage.getItem('lm_landlord_stage') || 'pending_draft';
+let flags = JSON.parse(localStorage.getItem('lm_landlord_flags') || '{}');
+function money(n){ return 'AED ' + n.toLocaleString('en-US'); }
+function save(){ localStorage.setItem('lm_landlord_stage', stage); localStorage.setItem('lm_landlord_flags', JSON.stringify(flags)); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200); }
+function goto(next){ stage = next; save(); render(); }
+
+function render(){
+  const idx = stages.indexOf(stage);
+  document.getElementById('stepper').innerHTML = stages.slice(0,5).map((s,i)=>`<div class="step ${i<=idx?'done':''}"></div>`).join('');
+  document.getElementById('stageLabel').innerHTML = `Stage <b>${idx+1} of 6</b> &middot; ${stageNames[stage].replace('&amp;','&')}`;
+
+  const jump = document.getElementById('jump');
+  jump.innerHTML = stages.map(s=>`<option value="${s}" ${s===stage?'selected':''}>${stageNames[s].replace('&amp;','&')}</option>`).join('');
+
+  const panel = document.getElementById('panel');
+  const applicant = `<div class="applicant-mini"><div class="avatar">S</div><div><div class="n">${deal.tenant}</div><div class="s">Accepted applicant &middot; verified profile</div></div><span class="pill">&#9733; Verified</span></div>`;
+
+  if(stage==='pending_draft'){
+    panel.innerHTML = `
+      <div class="eyebrow">Your turn</div>
+      <h3>Draft the lease agreement</h3>
+      <p class="desc">This applicant was accepted. Create the lease agreement to send it to them for signature.</p>
+      ${applicant}
+      <div class="lease-row"><span class="k">Annual rent</span><span class="v">${money(deal.rent)}</span></div>
+      <div class="lease-row"><span class="k">Security deposit</span><span class="v">${money(deal.deposit)}</span></div>
+      <div class="lease-row"><span class="k">Your net after 2.5% service fee</span><span class="v">${money(deal.rent-deal.fee)}</span></div>
+      <button class="btn primary block" style="margin-top:16px;" id="createDraft">Create lease agreement for approved tenant</button>`;
+  } else if(stage==='awaiting_signature'){
+    panel.innerHTML = `
+      <div class="waiting"><div class="spin"></div>
+        <h3>Waiting on ${deal.tenant}</h3>
+        <p class="desc">The agreement has been sent. You'll be notified as soon as it's signed.</p>
+      </div>
+      <div class="chat-nudge" style="text-align:center;">They may request changes first — <a id="nudgeOpenChat">check the amendment chat</a>.</div>
+      <div style="text-align:center; margin-top:10px;"><button class="btn ghost" data-demo="awaiting_finalize">Demo: simulate the tenant signing it &rarr;</button></div>`;
+  } else if(stage==='awaiting_finalize'){
+    panel.innerHTML = `
+      <div class="eyebrow">Your turn</div>
+      <h3>Review signature &amp; finalize</h3>
+      <p class="desc">Confirm the tenant's signature matches their verified identity, then finalize to move to payment.</p>
+      ${applicant}
+      <div class="sig-preview"><span class="mark-sig">Sara M.</span><div class="cap">Signed digitally &middot; matches verified identity on file</div></div>
+      <button class="btn primary block" id="finalizeBtn">Finalize agreement</button>`;
+  } else if(stage==='awaiting_payment'){
+    panel.innerHTML = `
+      <div class="waiting"><div class="spin"></div>
+        <h3>Waiting on ${deal.tenant}</h3>
+        <p class="desc">The agreement is finalized. Waiting for the deposit and first installment.</p>
+        <div style="margin-top:6px;"><span class="pill" style="margin:0;">Due: ${money(deal.deposit+deal.installment)}</span></div>
+      </div>
+      <div style="text-align:center; margin-top:14px;"><button class="btn ghost" data-demo="awaiting_confirmation">Demo: simulate the tenant paying &rarr;</button></div>`;
+  } else if(stage==='awaiting_confirmation'){
+    panel.innerHTML = `
+      <div class="eyebrow">Your turn</div>
+      <h3>Confirm receipt of payment</h3>
+      <p class="desc">${flags.demoReceipt?'The tenant uploaded a payment receipt.':'The tenant paid through the platform.'} Confirm you've received it to finalize the lease.</p>
+      ${flags.demoReceipt ? `<div class="receipt-preview"><span class="ic">&#128196;</span><div><div style="font-weight:600; font-size:13.5px;">payment-receipt.pdf</div><div style="font-size:11.5px; color:var(--ink-muted);">Uploaded by tenant</div></div></div>` : `
+      <div class="lease-row"><span class="k">Security deposit</span><span class="v">${money(deal.deposit)}</span></div>
+      <div class="lease-row"><span class="k">First rent installment</span><span class="v">${money(deal.installment)}</span></div>
+      <div class="lease-row"><span class="k">Total received</span><span class="v">${money(deal.deposit+deal.installment)}</span></div>`}
+      <button class="btn primary block" style="margin-top:16px;" id="confirmBtn">Confirm receipt of payment</button>
+      <div class="warning"><span class="ic">&#128273;</span><div><b>Do not release keys until you confirm payment.</b>Once you confirm, keys go to the tenant only through the property's designated pickup point or by tracked mail — never before confirmation, and never through anyone outside LeaseMatch.</div></div>`;
+  } else {
+    panel.innerHTML = `
+      <div class="done-box">
+        <div class="done-icon">&#10003;</div>
+        <h3 style="margin-bottom:8px;">Lease finalized</h3>
+        <p class="desc" style="margin:0 auto 18px;">Payment confirmed and the signed agreement is on file for both parties.</p>
+        <button class="btn primary block" id="download">Download signed agreement</button>
+      </div>
+      <div class="notice" style="text-align:left;"><span class="ic">&#128273;</span><div><b style="display:block; margin-bottom:2px;">Key handover</b>The tenant has been instructed to collect keys at your office — Marina Walk, Building 3, Suite 204, Dubai Marina — within 3 business days, or receive them by tracked mail (signature required).</div></div>
+      <div class="warning"><span class="ic">&#9888;&#65039;</span><div><b>Release keys only through this verified handover.</b>Hand them over in person at the address above, or ship by tracked mail with signature confirmation. Releasing keys any other way — or before payment showed Confirmed — is against LeaseMatch policy and voids fraud protection for this lease.</div></div>`;
+  }
+  bind();
+}
+
+function bind(){
+  document.getElementById('resetBtn').onclick = ()=>{ stage='pending_draft'; flags={}; save(); render(); toast('Simulation reset'); };
+  document.getElementById('jump').onchange = e=>{ goto(e.target.value); };
+  document.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.demo==='awaiting_confirmation') flags.demoReceipt = Math.random()>0.5;
+    goto(b.dataset.demo);
+  });
+
+  const createDraft = document.getElementById('createDraft');
+  if(createDraft) createDraft.onclick = ()=>{ goto('awaiting_signature'); toast('Lease agreement drafted and sent to tenant'); };
+  const finalizeBtn = document.getElementById('finalizeBtn');
+  if(finalizeBtn) finalizeBtn.onclick = ()=>{ goto('awaiting_payment'); toast('Agreement finalized — tenant notified to pay'); };
+  const confirmBtn = document.getElementById('confirmBtn');
+  if(confirmBtn) confirmBtn.onclick = ()=>{ goto('finalized'); toast('Payment confirmed — lease finalized'); };
+
+  const dl = document.getElementById('download');
+  if(dl) dl.onclick = ()=>toast('Downloading signed-lease-agreement.pdf');
+
+  const nudge = document.getElementById('nudgeOpenChat');
+  if(nudge) nudge.onclick = ()=>openChat();
+}
+
+/* ---------------- chat: negotiating/amending the draft ---------------- */
+const chatSeed = [
+  {who:'me',   text:"Hi Sara — here's the draft lease for 1BR Marina Promenade. Let us know if anything needs adjusting before you sign."},
+  {who:'them', text:"Thanks! Could we move the start date to the 15th instead of the 1st?"},
+  {who:'me',   text:"Sure, updated the draft to start on the 15th — the rest of the terms stay the same."},
+  {who:'them', text:"Perfect, one more thing — can we add a small pet clause for a cat?"},
+  {who:'me',   text:"Added — pets under 15kg are now permitted per the updated draft. Take a look and sign whenever ready."},
+];
+const canned = [
+  "Sounds good, thank you!",
+  "Got it, I'll take a look at the updated draft.",
+  "That works for me — appreciate the quick turnaround.",
+];
+let chat = JSON.parse(localStorage.getItem('lm_landlord_chat') || 'null') || chatSeed.slice();
+let chatOpen = false, chatUnread = Number(localStorage.getItem('lm_landlord_chat_unread') ?? 2);
+
+function saveChat(){ localStorage.setItem('lm_landlord_chat', JSON.stringify(chat)); localStorage.setItem('lm_landlord_chat_unread', chatUnread); }
+function renderChat(){
+  const body = document.getElementById('chatBody');
+  body.innerHTML = chat.map(m=>`<div class="msg ${m.who}">${m.text}</div>`).join('');
+  body.scrollTop = body.scrollHeight;
+  const badge = document.getElementById('chatBadge');
+  badge.style.display = chatUnread>0 ? 'flex' : 'none';
+  badge.textContent = chatUnread;
+}
+function openChat(){
+  chatOpen = true; chatUnread = 0; saveChat();
+  document.getElementById('chatPanel').classList.add('open');
+  renderChat();
+  document.getElementById('chatInput').focus();
+}
+function closeChat(){ chatOpen = false; document.getElementById('chatPanel').classList.remove('open'); }
+function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  chat.push({who:'me', text});
+  input.value = '';
+  saveChat(); renderChat();
+  const body = document.getElementById('chatBody');
+  const typing = document.createElement('div');
+  typing.className = 'typing'; typing.textContent = `${deal.tenant} is typing…`;
+  body.appendChild(typing); body.scrollTop = body.scrollHeight;
+  setTimeout(()=>{
+    typing.remove();
+    chat.push({who:'them', text: canned[Math.floor(Math.random()*canned.length)]});
+    saveChat(); renderChat();
+  }, 1100 + Math.random()*700);
+}
+document.getElementById('chatFab').onclick = ()=> chatOpen ? closeChat() : openChat();
+document.getElementById('chatClose').onclick = closeChat;
+document.getElementById('chatSend').onclick = sendChat;
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+renderChat();
+
+render();
+</script>
