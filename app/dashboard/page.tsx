@@ -1,3 +1,7 @@
+import { StayAndWait } from "@/components/StayAndWait";
+import { GuideTour } from "@/components/GuideTour";
+import { TOURS } from "@/lib/tours";
+import { waitingTenantsFor } from "@/lib/alerts";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -8,6 +12,7 @@ import {
   daysSince,
   getProfileById,
   getTenantPreferences,
+  listSavedAlerts,
   listLiveProperties,
   listPropertiesByProvider,
   scoreProperty,
@@ -46,6 +51,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        <GuideTour id={isProvider ? "dashboard-owner" : "dashboard-tenant"} steps={TOURS[isProvider ? "dashboard-owner" : "dashboard-tenant"]} />
         {isProvider ? <ProviderDashboard providerId={profile.id} /> : <TenantDashboard tenantId={profile.id} />}
       </main>
     </div>
@@ -138,7 +144,7 @@ function ProviderDashboard({ providerId }: { providerId: string }) {
 
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold">Your properties</h2>
-        <Link
+        <Link data-tour="add-listing"
           href="/dashboard/properties/new"
           className="rounded-md px-4 py-2 text-sm font-medium"
           style={{ background: "var(--accent)", color: "var(--accent-ink)" }}
@@ -162,7 +168,7 @@ function ProviderDashboard({ providerId }: { providerId: string }) {
           </Link>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-3" data-tour="owner-listings">
           {properties.map((p) => (
             <li
               key={p.id}
@@ -215,6 +221,11 @@ function ProviderDashboard({ providerId }: { providerId: string }) {
           ))}
         </ul>
       )}
+      {pendingApplicants === 0 && properties.length > 0 && (
+        <div className="mt-6">
+          <StayAndWait role="provider" filters={{ location: properties[0]?.location.split(",")[0] }} back="/dashboard" alerts={listSavedAlerts(providerId)} waitingCount={waitingTenantsFor(properties)} />
+        </div>
+      )}
     </section>
   );
 }
@@ -248,6 +259,7 @@ function TenantDashboard({ tenantId }: { tenantId: string }) {
       </div>
 
       <div
+        data-tour="dash-actions"
         className="mb-6 flex items-center justify-between rounded-lg border bg-surface p-4"
         style={{ borderColor: "var(--border)" }}
       >
@@ -285,14 +297,9 @@ function TenantDashboard({ tenantId }: { tenantId: string }) {
       )}
 
       {properties.length === 0 ? (
-        <div
-          className="rounded-lg border border-dashed p-10 text-center"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <p className="text-text-muted">No live listings yet — check back soon.</p>
-        </div>
+        <StayAndWait role="tenant" filters={{ location: prefs?.locations[0], maxPrice: prefs?.budget ?? undefined }} back="/dashboard" alerts={listSavedAlerts(tenantId)} />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-tour="dash-matches">
           {properties.map(({ property: p, score }) => (
             <PropertyCard key={p.id} property={p} matchScore={prefs ? score : undefined} />
           ))}

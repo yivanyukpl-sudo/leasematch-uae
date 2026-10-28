@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PropertyCard } from "@/components/PropertyCard";
 import { getSession } from "@/lib/auth";
-import { getTenantPreferences, scoreProperty, searchLiveProperties } from "@/lib/db";
+import { getTenantPreferences, listSavedAlerts, scoreProperty, searchLiveProperties } from "@/lib/db";
+import { StayAndWait } from "@/components/StayAndWait";
+import { GuideTour } from "@/components/GuideTour";
+import { TOURS } from "@/lib/tours";
+import { waitingTenantsTotal } from "@/lib/alerts";
 import { commonLocations, propertyTypes } from "@/lib/schemas";
 
 const selectClass = "w-full rounded-md border bg-surface px-3 py-2 text-sm";
@@ -53,7 +57,9 @@ export default async function ListingsPage({ searchParams }: PageProps<"/listing
           </div>
         </div>
 
+        <GuideTour id="listings" steps={TOURS.listings} />
         <form
+          data-tour="listing-filters"
           className="mb-6 grid gap-3 rounded-lg border bg-surface p-4 sm:grid-cols-3 lg:grid-cols-6"
           style={{ borderColor: "var(--border)" }}
         >
@@ -121,9 +127,14 @@ export default async function ListingsPage({ searchParams }: PageProps<"/listing
         </p>
 
         {properties.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-10 text-center" style={{ borderColor: "var(--border)" }}>
-            <p className="text-text-muted">Nothing matches those filters.</p>
-          </div>
+          <StayAndWait
+            role={session.role === "tenant" ? "tenant" : "provider"}
+            filters={{ location: filters.location ?? filters.q, maxPrice: filters.maxPrice, minBeds: filters.minBeds, type: filters.propertyType }}
+            back={`/listings?${new URLSearchParams(Object.entries(sp).filter(([k, v]) => k !== "alert" && typeof v === "string") as [string, string][]).toString()}`}
+            alerts={listSavedAlerts(session.sub)}
+            justSaved={one(sp.alert) === "saved"}
+            waitingCount={session.role === "tenant" ? undefined : waitingTenantsTotal()}
+          />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((p) => (

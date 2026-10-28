@@ -104,3 +104,12 @@ export const commonLocations = [
   "Business Bay",
   "Jumeirah Village Circle",
 ] as const;
+
+export const leaseTermsSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the move-in date"),
+  months: z.coerce.number().int().min(1, "At least 1 month").max(36),
+  deposit: z.coerce.number().min(0).max(10_000_000),
+  cheques: z.coerce.number().int().min(1).max(12),
+  utilities: z.enum(["tenant", "included"]),
+  notes: z.string().max(600).nullable(),
+});

@@ -40,6 +40,14 @@ import { comparablesFor } from "@/lib/comparables";
 import { isEmailConfigured, sendExternalInquiryEmail } from "@/lib/email";
 import { externalInquiryReplySchema } from "@/lib/schemas";
 
+import { getPackage } from "@/lib/packages";
+import { leaseTermsSchema } from "@/lib/schemas";
+import { answerDealQuestion } from "@/lib/deal-assistant";
+import { markPackagePaid, saveLeaseTerms, setLeasePackage } from "@/lib/db";
+import { getStripe } from "@/lib/payments";
+import { rateLimit } from "@/lib/rate-limit";
+import { notifyTenantsAboutListing } from "@/lib/alerts";
+
 const PROVIDER_ROLES = new Set(["owner", "broker", "pm"]);
 
 async function requireSession() {
@@ -54,7 +62,70 @@ export async function publishProperty(formData: FormData) {
   const property = getPropertyById(propertyId);
   if (!property || property.provider_id !== session.sub) return;
   setPropertyStatus(propertyId, "live");
+  // Tenants waiting with a matching "notify me" alert hear about it now.
+  await notifyTenantsAboutListing({ ...property, status: "live" });
   revalidatePath("/dashboard");
+}
+
+// ---- Guided deal: terms, package, assistant ----
+
+export async function saveTermsAction(formData: FormData) {
+  const session = await requireSession();
+  const leaseId = String(formData.get("leaseId") || "");
+  const lease = assertLeaseParty(leaseId, session.sub);
+  if (!lease || lease.stage !== "awaiting_signature" || lease.tenant_signed_at || lease.landlord_signed_at) return;
+  const parsed = leaseTermsSchema.safeParse({
+    startDate: formData.get("startDate"),
+    months: formData.get("months"),
+    deposit: formData.get("deposit"),
+    cheques: formData.get("cheques"),
+    utilities: formData.get("utilities"),
+    notes: String(formData.get("notes") || "").trim() || null,
+  });
+  if (!parsed.success) redirect(`/dashboard/leases/${leaseId}?termsError=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Check the terms")}`);
+  saveLeaseTerms(leaseId, parsed.data);
+  addLeaseMessage({
+    leaseId,
+    senderId: session.sub,
+    body: `Updated the contract terms: from ${parsed.data.startDate}, ${parsed.data.months} months, deposit AED ${parsed.data.deposit}, ${parsed.data.cheques} cheque(s).`,
+  });
+  revalidatePath(`/dashboard/leases/${leaseId}`);
+}
+
+export async function choosePackageAction(formData: FormData) {
+  const session = await requireSession();
+  const leaseId = String(formData.get("leaseId") || "");
+  const lease = assertLeaseParty(leaseId, session.sub);
+  const pkg = getPackage(String(formData.get("package") || ""));
+  if (!lease || lease.tenant_id !== session.sub || !pkg || lease.package_paid_at) return;
+  setLeasePackage(leaseId, pkg.id);
+  const stripe = getStripe();
+  if (stripe) {
+    const tenant = getProfileById(session.sub);
+    const checkout = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: tenant?.email,
+      line_items: [{ price_data: { currency: "aed", unit_amount: pkg.price * 100, product_data: { name: `LeaseMatch package — ${pkg.name}` } }, quantity: 1 }],
+      metadata: { leaseId, purpose: "package", package: pkg.id },
+      success_url: await absoluteUrl(`/dashboard/leases/${leaseId}?package_session={CHECKOUT_SESSION_ID}`),
+      cancel_url: await absoluteUrl(`/dashboard/leases/${leaseId}`),
+    });
+    if (checkout.url) redirect(checkout.url);
+    return;
+  }
+  // Prototype without a payment provider: record a simulated payment.
+  markPackagePaid(leaseId);
+  addLeaseMessage({ leaseId, senderId: session.sub, body: `Chose the “${pkg.name}” package (AED ${pkg.price}) — simulated payment.` });
+  revalidatePath(`/dashboard/leases/${leaseId}`);
+}
+
+export async function askDealAssistantAction(leaseId: string, question: string): Promise<{ answer: string }> {
+  const session = await requireSession();
+  const lease = assertLeaseParty(leaseId, session.sub);
+  if (!lease) return { answer: "You don't have access to this lease." };
+  if (!rateLimit(`deal-assistant:${session.sub}`, 30, 60 * 60).ok) return { answer: "Too many questions this hour — try again a bit later." };
+  const property = getPropertyById(lease.property_id);
+  return { answer: await answerDealQuestion({ question: question.slice(0, 800), lease, property: property ?? null, role: lease.tenant_id === session.sub ? "tenant" : "owner" }) };
 }
 
 export async function savePreferences(formData: FormData) {
@@ -161,6 +232,8 @@ export async function signLeaseAction(formData: FormData) {
 
   const profile = getProfileById(session.sub);
   if (!profile) return;
+  // The guided deal: terms agreed and the tenant's package paid before anyone signs.
+  if (!lease.terms || !lease.package_paid_at) return;
   // The typed name must match the account holder's name on file — this is
   // the in-app equivalent of the identity check UAE Pass would otherwise do.
   if (parsed.data.signatureName.trim().toLowerCase() !== profile.full_name.trim().toLowerCase()) {

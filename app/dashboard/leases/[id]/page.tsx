@@ -6,7 +6,9 @@ import {
   getLeaseById,
   getPropertyById,
   getProfileById,
+  listInspectionsForLease,
   listLeaseMessages,
+  markPackagePaid,
   submitPayment,
 } from "@/lib/db";
 import { leaseStageIndex, leaseStageLabels, leaseStageOrder } from "@/lib/leases";
@@ -17,6 +19,11 @@ import {
 } from "@/lib/payments";
 import { comparablesFor, isPricedAboveMarket } from "@/lib/comparables";
 import { NegotiationNudge } from "@/components/NegotiationNudge";
+import { DealAssistant } from "@/components/DealAssistant";
+import { ContractPreview, PackagePicker, TermsCard } from "@/components/DealPanels";
+import { GuideTour } from "@/components/GuideTour";
+import { TOURS } from "@/lib/tours";
+import { assistantMessage, currentStep, dealSteps, type DealState, type LeaseTerms } from "@/lib/deal";
 import {
   confirmCryptoSentAction,
   confirmPaymentAction,
@@ -32,10 +39,10 @@ export default async function LeasePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ payment_session?: string; crypto_started?: string }>;
+  searchParams: Promise<{ payment_session?: string; crypto_started?: string; package_session?: string; termsError?: string }>;
 }) {
   const { id } = await params;
-  const { payment_session: paymentSession, crypto_started: cryptoStarted } = await searchParams;
+  const { payment_session: paymentSession, crypto_started: cryptoStarted, package_session: packageSession, termsError } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -56,6 +63,15 @@ export default async function LeasePage({
     redirect(`/dashboard/leases/${id}`);
   }
 
+  // Returning from the package checkout: verify it actually paid.
+  if (packageSession && lease.tenant_id === session.sub && !lease.package_paid_at) {
+    const checkout = await retrieveCheckoutSession(packageSession);
+    if (checkout?.payment_status === "paid" && checkout.metadata?.purpose === "package" && checkout.metadata?.leaseId === lease.id) {
+      markPackagePaid(lease.id);
+    }
+    redirect(`/dashboard/leases/${id}`);
+  }
+
   const isTenant = lease.tenant_id === session.sub;
   const property = getPropertyById(lease.property_id);
   const tenant = getProfileById(lease.tenant_id);
@@ -66,6 +82,19 @@ export default async function LeasePage({
 
   const myTurnToSign = isTenant ? !lease.tenant_signed_at : !lease.landlord_signed_at;
   const providerConfigured = isPaymentProviderConfigured();
+  const terms: LeaseTerms | null = lease.terms ? JSON.parse(lease.terms) : null;
+  const inspections = listInspectionsForLease(lease.id);
+  const dealState: DealState = {
+    stage: lease.stage,
+    terms,
+    pkg: lease.package,
+    packagePaid: Boolean(lease.package_paid_at),
+    inspectionDone: inspections.some((x) => x.status === "done"),
+    tenantSigned: Boolean(lease.tenant_signed_at),
+    ownerSigned: Boolean(lease.landlord_signed_at),
+  };
+  const step = currentStep(dealState);
+  const readyToSign = Boolean(terms && lease.package_paid_at);
   const cryptoConfigured = isCryptoPaymentConfigured();
   const comparableStats = property ? comparablesFor(property) : null;
 
@@ -79,6 +108,26 @@ export default async function LeasePage({
         <h1 className="font-display text-2xl font-semibold mb-6">Lease agreement</h1>
 
         <StageTracker stage={lease.stage} />
+        <GuideTour id="lease" steps={TOURS.lease} />
+
+        <div className="mt-6">
+          <DealAssistant leaseId={lease.id} steps={dealSteps(dealState)} current={step} message={assistantMessage(step, isTenant ? "tenant" : "owner", dealState)} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-4 text-sm" style={{ borderColor: "var(--border)" }} data-tour="deal-inspection">
+          <span className="text-xl" aria-hidden>📸</span>
+          <div className="min-w-0 flex-1">
+            <b>AI photo inspection</b>
+            <p className="text-xs text-text-muted">
+              {inspections.length
+                ? `Inspections: ${inspections.length}. Latest: ${inspections[0].status === "done" ? "finished" : "in progress"}.`
+                : "Photograph the home step by step — the AI flags damp, cracks or broken appliances."}
+            </p>
+          </div>
+          <Link href={inspections[0] ? `/dashboard/inspections/${inspections[0].id}` : `/dashboard/inspections/new?lease=${lease.id}`} className="rounded-md px-3 py-2 text-xs font-medium" style={{ background: "var(--accent)", color: "var(--accent-ink)" }}>
+            {inspections.length ? "Open inspection" : "Start inspection"}
+          </Link>
+        </div>
 
         <div
           className="mt-6 rounded-lg border bg-surface p-6"
@@ -104,6 +153,14 @@ export default async function LeasePage({
                   : "Pending"}
               </p>
 
+              {property && (
+                <TermsCard leaseId={lease.id} terms={terms} rent={property.price} editable={!lease.tenant_signed_at && !lease.landlord_signed_at} error={termsError} />
+              )}
+              {terms && <PackagePicker leaseId={lease.id} isTenant={isTenant} chosen={lease.package} paid={Boolean(lease.package_paid_at)} canPay />}
+              {terms && property && tenant && provider && (
+                <ContractPreview ownerName={provider.company_name ?? provider.full_name} tenantName={tenant.full_name} address={property.location} rent={property.price} terms={terms} />
+              )}
+
               {myTurnToSign && isTenant && property && comparableStats && isPricedAboveMarket(property.price, comparableStats) && (
                 <NegotiationNudge
                   leaseId={lease.id}
@@ -113,7 +170,11 @@ export default async function LeasePage({
                 />
               )}
 
-              {myTurnToSign ? (
+              {myTurnToSign && !readyToSign ? (
+                <p className="rounded-md p-3 text-sm text-text-muted" style={{ background: "var(--field)" }}>
+                  You can sign once the terms are agreed and the LeaseMatch package is paid.
+                </p>
+              ) : myTurnToSign ? (
                 <div className="space-y-3">
                   <button
                     type="button"

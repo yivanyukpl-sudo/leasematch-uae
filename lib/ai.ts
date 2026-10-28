@@ -28,6 +28,8 @@ import {
   type Property,
 } from "./db";
 import { comparablesFor } from "./comparables";
+import { createSavedAlert } from "./db";
+import { notifyProvidersAboutTenant } from "./alerts";
 import { commonLocations, propertyTypes as knownPropertyTypes } from "./schemas";
 import { isEmailConfigured, sendExternalInquiryEmail } from "./email";
 import { describeOpenAIError, getOpenAI, isOpenAIConfigured, OPENAI_MODEL } from "./openai";
@@ -106,6 +108,19 @@ const tools: FunctionTool[] = ([
           type: "number",
           description: "Maximum annual rent in AED the tenant is willing to pay. Omit if unknown.",
         },
+      },
+    },
+  },
+  {
+    name: "save_alert",
+    description:
+      "Save a 'notify me' alert so the tenant is emailed when a matching LeaseMatch listing goes live. Offer it whenever search_properties finds nothing suitable, and call it once the tenant agrees.",
+    input_schema: {
+      type: "object",
+      properties: {
+        location: { type: "string", description: "Area, e.g. Al Reem Island" },
+        maxPrice: { type: "number", description: "Max annual rent in AED" },
+        minBeds: { type: "number" },
       },
     },
   },
@@ -360,6 +375,20 @@ async function runTool(
     return { applicationId: application.id, status: application.status };
   }
 
+  if (name === "save_alert") {
+    const alert = createSavedAlert({
+      profile_id: ctx.tenantId,
+      kind: "listing",
+      location: typeof input.location === "string" && input.location.trim() ? input.location.trim().slice(0, 80) : null,
+      max_price: typeof input.maxPrice === "number" ? input.maxPrice : null,
+      min_beds: typeof input.minBeds === "number" ? input.minBeds : null,
+      property_type: null,
+      note: "via agent",
+    });
+    await notifyProvidersAboutTenant(alert);
+    return { saved: true, location: alert.location, maxPrice: alert.max_price };
+  }
+
   return { error: `Unknown tool ${name}` };
 }
 
@@ -371,6 +400,7 @@ Formatting — this matters: your replies render as plain text in a chat bubble,
 - Always call search_properties to see what's real before recommending anything from LeaseMatch — never invent or assume a listing exists.
 - Use the marketComparables data returned by search_properties to judge whether a stated budget is realistic for the area/type requested. If someone's budget is well below what similar live listings cost, say so plainly and explain the gap using the real numbers (e.g. "listings like that in Dubai Marina are averaging AED X — your budget is about Y% below that"), then offer concrete alternatives: a nearby cheaper area, a smaller unit type, or accepting they may need to increase budget. Don't just say "no matches" — explain why and advise, the way an agent would on a call.
 - If there truly are no live listings matching the request at all (zero results, even loosely), say that directly and suggest what to search instead — don't pretend something is available.
+- If search_properties finds nothing suitable, don't send the tenant back to portals or fee-charging agents. Explain that landlords, property managers and agents who charge their commission to the landlord (never the tenant) join LeaseMatch every day, offer to save an alert with save_alert so they're emailed the moment a match appears, and suggest staying in the app while you keep looking.
 - Only call apply_to_property after the tenant has clearly confirmed they want to apply to that specific listing.
 - Keep replies conversational and concise — a few sentences, not a report. You're texting with someone, not writing a memo.
 - Never fabricate prices, availability, or application status — everything must come from tool results.

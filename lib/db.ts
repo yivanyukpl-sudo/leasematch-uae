@@ -35,7 +35,7 @@ declare global {
 // Bump when the schema below changes. In dev the connection survives
 // hot-reloads (see bottom of this block), so this is what makes a running
 // `next dev` pick up new tables/columns and the sample seed without a restart.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function open(): DatabaseSync {
   fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -228,6 +228,55 @@ function ensureSchema(db: DatabaseSync) {
   addColumnIfMissing(db, "properties", "photos", "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, "external_inquiries", "contact_phone", "TEXT");
   addColumnIfMissing(db, "external_inquiries", "market_listing_id", "TEXT");
+  addColumnIfMissing(db, "leases", "package", "TEXT");
+  addColumnIfMissing(db, "leases", "package_paid_at", "TEXT");
+  addColumnIfMissing(db, "leases", "terms", "TEXT");
+  db.exec(`
+    -- Private files on disk (UPLOAD_DIR): inspection photos.
+    CREATE TABLE IF NOT EXISTS uploads (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      property_id TEXT REFERENCES properties(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK (kind IN ('photo','inspection')),
+      file_name TEXT NOT NULL,
+      original_name TEXT,
+      mime TEXT NOT NULL,
+      size INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    -- "Notify me" alerts: tenants wait for listings, landlords/agents for tenants.
+    CREATE TABLE IF NOT EXISTS saved_alerts (
+      id TEXT PRIMARY KEY,
+      profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK (kind IN ('listing','tenant')),
+      location TEXT,
+      max_price REAL,
+      min_beds INTEGER,
+      property_type TEXT,
+      note TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      last_notified_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS inspections (
+      id TEXT PRIMARY KEY,
+      property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+      lease_id TEXT REFERENCES leases(id) ON DELETE SET NULL,
+      created_by TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      purpose TEXT NOT NULL DEFAULT 'viewing' CHECK (purpose IN ('viewing','handover','listing')),
+      status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','done')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      finished_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS inspection_photos (
+      id TEXT PRIMARY KEY,
+      inspection_id TEXT NOT NULL REFERENCES inspections(id) ON DELETE CASCADE,
+      step TEXT NOT NULL,
+      upload_id TEXT NOT NULL REFERENCES uploads(id) ON DELETE CASCADE,
+      analysis TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 
   seedSampleData(db);
 }
@@ -643,6 +692,9 @@ export type Lease = {
   payment_provider: string | null;
   payment_reference: string | null;
   confirmed_at: string | null;
+  package: string | null;
+  package_paid_at: string | null;
+  terms: string | null;
   created_at: string;
 };
 
@@ -1051,4 +1103,169 @@ export function listAgentCalls(
     .prepare(`SELECT * FROM agent_calls WHERE tenant_id = ? ORDER BY created_at DESC`)
     .all(tenantId)
     .map(rowToCall);
+}
+
+// ---- Uploads ----
+
+export type Upload = {
+  id: string;
+  owner_id: string;
+  property_id: string | null;
+  kind: "photo" | "inspection";
+  file_name: string;
+  original_name: string | null;
+  mime: string;
+  size: number;
+  created_at: string;
+};
+
+export function createUpload(input: Omit<Upload, "created_at">): Upload {
+  db.prepare(
+    `INSERT INTO uploads (id, owner_id, property_id, kind, file_name, original_name, mime, size)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    input.id,
+    input.owner_id,
+    input.property_id,
+    input.kind,
+    input.file_name,
+    input.original_name,
+    input.mime,
+    input.size
+  );
+  return getUpload(input.id)!;
+}
+
+export function getUpload(id: string): Upload | undefined {
+  return db.prepare(`SELECT * FROM uploads WHERE id = ?`).get(id) as Upload | undefined;
+}
+
+
+// ---- Deal packages ----
+
+export function setLeasePackage(leaseId: string, pkg: string) {
+  db.prepare(`UPDATE leases SET package = ? WHERE id = ? AND package_paid_at IS NULL`).run(pkg, leaseId);
+}
+
+export function markPackagePaid(leaseId: string) {
+  db.prepare(`UPDATE leases SET package_paid_at = COALESCE(package_paid_at, datetime('now')) WHERE id = ?`).run(leaseId);
+}
+
+export function saveLeaseTerms(leaseId: string, terms: Record<string, unknown>) {
+  db.prepare(`UPDATE leases SET terms = ? WHERE id = ? AND tenant_signed_at IS NULL AND landlord_signed_at IS NULL`).run(
+    JSON.stringify(terms),
+    leaseId
+  );
+}
+
+// ---- Saved alerts ("notify me") ----
+
+export type SavedAlert = {
+  id: string;
+  profile_id: string;
+  kind: "listing" | "tenant";
+  location: string | null;
+  max_price: number | null;
+  min_beds: number | null;
+  property_type: string | null;
+  note: string | null;
+  active: number;
+  last_notified_at: string | null;
+  created_at: string;
+};
+
+export function createSavedAlert(a: Omit<SavedAlert, "id" | "active" | "last_notified_at" | "created_at">): SavedAlert {
+  const id = newId();
+  db.prepare(
+    `INSERT INTO saved_alerts (id, profile_id, kind, location, max_price, min_beds, property_type, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, a.profile_id, a.kind, a.location, a.max_price, a.min_beds, a.property_type, a.note);
+  return db.prepare(`SELECT * FROM saved_alerts WHERE id = ?`).get(id) as SavedAlert;
+}
+
+export function listSavedAlerts(profileId: string): SavedAlert[] {
+  return db
+    .prepare(`SELECT * FROM saved_alerts WHERE profile_id = ? AND active = 1 ORDER BY created_at DESC`)
+    .all(profileId) as SavedAlert[];
+}
+
+export function deactivateSavedAlert(id: string, profileId: string) {
+  db.prepare(`UPDATE saved_alerts SET active = 0 WHERE id = ? AND profile_id = ?`).run(id, profileId);
+}
+
+export function activeAlerts(kind: SavedAlert["kind"]): SavedAlert[] {
+  return db.prepare(`SELECT * FROM saved_alerts WHERE kind = ? AND active = 1`).all(kind) as SavedAlert[];
+}
+
+export function touchAlert(id: string) {
+  db.prepare(`UPDATE saved_alerts SET last_notified_at = datetime('now') WHERE id = ?`).run(id);
+}
+
+// ---- Photo inspections ----
+
+export type Inspection = {
+  id: string;
+  property_id: string;
+  lease_id: string | null;
+  created_by: string;
+  purpose: "viewing" | "handover" | "listing";
+  status: "in_progress" | "done";
+  created_at: string;
+  finished_at: string | null;
+};
+
+export type InspectionPhoto = {
+  id: string;
+  inspection_id: string;
+  step: string;
+  upload_id: string;
+  analysis: string | null;
+  created_at: string;
+};
+
+export function createInspection(i: { propertyId: string; leaseId: string | null; createdBy: string; purpose: Inspection["purpose"] }): Inspection {
+  const id = newId();
+  db.prepare(`INSERT INTO inspections (id, property_id, lease_id, created_by, purpose) VALUES (?, ?, ?, ?, ?)`).run(
+    id,
+    i.propertyId,
+    i.leaseId,
+    i.createdBy,
+    i.purpose
+  );
+  return getInspection(id)!;
+}
+
+export const getInspection = (id: string) => db.prepare(`SELECT * FROM inspections WHERE id = ?`).get(id) as Inspection | undefined;
+
+export function listInspectionsFor(profileId: string, propertyId?: string): Inspection[] {
+  return (propertyId
+    ? db.prepare(`SELECT * FROM inspections WHERE created_by = ? AND property_id = ? ORDER BY created_at DESC`).all(profileId, propertyId)
+    : db.prepare(`SELECT * FROM inspections WHERE created_by = ? ORDER BY created_at DESC`).all(profileId)) as Inspection[];
+}
+
+export function listInspectionsForLease(leaseId: string): Inspection[] {
+  return db.prepare(`SELECT * FROM inspections WHERE lease_id = ? ORDER BY created_at DESC`).all(leaseId) as Inspection[];
+}
+
+export function addInspectionPhoto(i: { inspectionId: string; step: string; uploadId: string; analysis: unknown }) {
+  db.prepare(`INSERT INTO inspection_photos (id, inspection_id, step, upload_id, analysis) VALUES (?, ?, ?, ?, ?)`).run(
+    newId(),
+    i.inspectionId,
+    i.step,
+    i.uploadId,
+    JSON.stringify(i.analysis)
+  );
+}
+
+export const listInspectionPhotos = (inspectionId: string) =>
+  db.prepare(`SELECT * FROM inspection_photos WHERE inspection_id = ? ORDER BY created_at`).all(inspectionId) as InspectionPhoto[];
+
+export function finishInspection(id: string) {
+  db.prepare(`UPDATE inspections SET status = 'done', finished_at = datetime('now') WHERE id = ?`).run(id);
+}
+
+export function inspectionIdsForUpload(uploadId: string): string[] {
+  return (db.prepare(`SELECT inspection_id FROM inspection_photos WHERE upload_id = ?`).all(uploadId) as { inspection_id: string }[]).map(
+    (r) => r.inspection_id
+  );
 }

@@ -163,6 +163,22 @@ export default async function PropertyDetailPage({
             )}
           </>
         )}
+        {(isTenant || isOwner) && (
+          <Link
+            href={`/dashboard/inspections/new?property=${property.id}`}
+            data-tour="property-inspection"
+            className="mt-4 flex items-center gap-3 rounded-lg border bg-surface p-4 text-sm"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <span className="text-2xl" aria-hidden>📸</span>
+            <span>
+              <b>{isOwner ? "Check the home with an AI photo inspection" : "Going to a viewing? Run the AI photo inspection"}</b>
+              <span className="block text-xs text-text-muted">
+                {isOwner ? "The AI suggests what to fix so the listing looks honest and appealing." : "The assistant walks you room by room; the AI flags damp, cracks or broken appliances."}
+              </span>
+            </span>
+          </Link>
+        )}
       </main>
     </div>
   );

@@ -76,6 +76,28 @@ export async function sendExternalInquiryEmail(input: {
   }
 }
 
+// Transactional email (alerts). Without Mailgun, development logs the
+// message to the server console; production reports failure.
+export async function sendEmail(input: { to: string; subject: string; text: string }): Promise<{ ok: boolean }> {
+  const apiKey = process.env.MAILGUN_API_KEY;
+  const domain = process.env.MAILGUN_DOMAIN;
+  if (!apiKey || !domain) {
+    if (process.env.NODE_ENV !== "production") console.info(`[email:dev] to=${input.to} subject=${input.subject}\n${input.text}\n`);
+    return { ok: process.env.NODE_ENV !== "production" };
+  }
+  const form = new URLSearchParams({ from: `LeaseMatch <no-reply@${domain}>`, to: input.to, subject: input.subject, text: input.text });
+  try {
+    const res = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+    return { ok: res.ok };
+  } catch {
+    return { ok: false };
+  }
+}
+
 // Verifies Mailgun's inbound webhook signature: HMAC-SHA256 of
 // `${timestamp}${token}` using the Mailgun API key (the "signing key" for
 // webhooks is the account's API key), compared to the signature Mailgun

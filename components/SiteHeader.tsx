@@ -20,7 +20,7 @@ export async function SiteHeader() {
         <Link href="/">
           <Logo />
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
+        <nav data-tour="nav" className="flex items-center gap-4 text-sm">
           <Link href="/demos" className="text-text-muted hover:text-text">
             Demos
           </Link>

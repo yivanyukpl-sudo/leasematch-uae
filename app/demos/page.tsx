@@ -8,6 +8,24 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 const simulations = [
   {
+    href: "/simulations/roles/tenant.html",
+    title: "Step-by-step simulation: tenant",
+    body: "Tap the highlighted buttons through the tenant journey: preferences, matches, “notify me”, the AI agent, package, AI photo inspection, signing and keys.",
+    tag: "Tenant",
+  },
+  {
+    href: "/simulations/roles/owner.html",
+    title: "Step-by-step simulation: landlord",
+    body: "Listing, AI photo tips, waiting tenants, an application, contract terms, signing and confirming payment.",
+    tag: "Landlord",
+  },
+  {
+    href: "/simulations/roles/agent.html",
+    title: "Step-by-step simulation: agent",
+    body: "How an agent works transparently: the landlord pays the commission, tenants see it on the card, and the deal runs through the assistant.",
+    tag: "Agent",
+  },
+  {
     href: "/simulations/agent-outreach.html",
     title: "Agent outreach simulation",
     body: "Watch the AI agent search Bayut and Dubizzle, contact landlords through the portals and by email, phone one of them, then move the conversation into a LeaseMatch chat and negotiate, checking with the tenant at each step.",
