@@ -9,7 +9,8 @@ through a guided contract, an AI photo inspection, e-signature and payment.
 **Stage:** working prototype (pilot-ready). Real AI end to end; payments and
 agent phone calls are simulated, and listings are sample data.
 
-- **Live prototype:** _add your Render link here_
+- **Live prototype:** https://leasematch-uae.onrender.com
+- **Code:** https://github.com/yivanyukpl-sudo/leasematch-uae
 - **Tenant login:** `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026`
 - **Landlord logins:** `marina.pm@sample.leasematch.test`, `owner.skyline@sample.leasematch.test`, `meadows@sample.leasematch.test` — password `LeaseMatch-demo-2026`
 
