@@ -21,6 +21,8 @@ import type {
 import { z } from "zod";
 import type { MarketListing } from "./db";
 import { describeOpenAIError, getOpenAI, OPENAI_MODEL } from "./openai";
+import { isClaudeConfigured } from "./claude";
+import { searchMarketListingsClaude } from "./market-search-claude";
 
 export const marketSites = {
   bayut: { label: "Bayut", domains: ["bayut.com"] },
@@ -41,13 +43,13 @@ export const marketCriteriaSchema = z.object({
 
 export type MarketCriteria = z.infer<typeof marketCriteriaSchema>;
 
-type FoundListing = Omit<MarketListing, "id" | "search_id" | "tenant_id" | "created_at">;
+export type FoundListing = Omit<MarketListing, "id" | "search_id" | "tenant_id" | "created_at">;
 
 export type MarketSearchResult =
   | { ok: true; summary: string; listings: FoundListing[]; droppedUnverified: number; searches: number }
   | { ok: false; error: string };
 
-const reportSchema = z.object({
+export const reportSchema = z.object({
   summary: z.string(),
   listings: z.array(
     z.object({
@@ -68,7 +70,7 @@ const reportSchema = z.object({
 
 const nullableString = { type: ["string", "null"] };
 
-const reportTool: FunctionTool = {
+export const reportTool: FunctionTool = {
   type: "function",
   name: "report_listings",
   description:
@@ -127,7 +129,7 @@ const reportTool: FunctionTool = {
   },
 };
 
-function normalizeUrl(raw: string): string | null {
+export function normalizeUrl(raw: string): string | null {
   try {
     const u = new URL(raw.trim());
     const host = u.hostname.toLowerCase().replace(/^www\./, "");
@@ -137,7 +139,7 @@ function normalizeUrl(raw: string): string | null {
   }
 }
 
-function hostAllowed(raw: string, domains: readonly string[]): boolean {
+export function hostAllowed(raw: string, domains: readonly string[]): boolean {
   try {
     const host = new URL(raw).hostname.toLowerCase().replace(/^www\./, "");
     return domains.some((d) => host === d || host.endsWith(`.${d}`));
@@ -170,7 +172,7 @@ function collectSearchUrls(output: ResponseOutputItem[], into: Set<string>): num
   return searches;
 }
 
-function buildPrompt(c: MarketCriteria): string {
+export function buildPrompt(c: MarketCriteria): string {
   const sites = c.sites.map((s) => marketSites[s].label).join(" and ");
   return [
     `Find current rental ads on ${sites} for a tenant in the UAE with these criteria:`,
@@ -189,6 +191,7 @@ function buildPrompt(c: MarketCriteria): string {
 }
 
 export async function searchMarketListings(criteria: MarketCriteria): Promise<MarketSearchResult> {
+  if (isClaudeConfigured()) return searchMarketListingsClaude(criteria);
   const openai = getOpenAI();
   if (!openai) {
     return {

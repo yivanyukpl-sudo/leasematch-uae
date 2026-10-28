@@ -3,9 +3,14 @@
 // tried; demo results are never presented as a real assessment.
 
 import { getOpenAI, OPENAI_MODEL } from "./openai";
+import { isClaudeConfigured } from "./claude";
+import { analyzePhotoClaude } from "./inspection-ai-claude";
 import { stepByKey, type PhotoAnalysis } from "./inspection-steps";
 
-const schema = {
+export const INSPECTOR_PROMPT =
+  "You inspect the condition of rental homes in the UAE. Judge the photo honestly and carefully: describe only what is visible. Never invent defects; if the photo is dark, blurry or doesn't show what's needed, set quality=retake and say why. Write in English, briefly and practically for the tenant (what to check or ask the landlord to fix).";
+
+export const photoAnalysisSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -42,13 +47,16 @@ const DEMO: Record<string, PhotoAnalysis> = {
 
 export async function analyzePhoto(buf: Buffer, mime: string, stepKey: string): Promise<PhotoAnalysis> {
   const step = stepByKey(stepKey);
+  if (step && isClaudeConfigured()) {
+    const result = await analyzePhotoClaude(buf, mime, step, INSPECTOR_PROMPT);
+    if (result) return result;
+  }
   const openai = getOpenAI();
   if (openai && step) {
     try {
       const res = await openai.responses.create({
         model: OPENAI_MODEL,
-        instructions:
-          "You inspect the condition of rental homes in the UAE. Judge the photo honestly and carefully: describe only what is visible. Never invent defects; if the photo is dark, blurry or doesn't show what's needed, set quality=retake and say why. Write in English, briefly and practically for the tenant (what to check or ask the landlord to fix).",
+        instructions: INSPECTOR_PROMPT,
         input: [
           {
             role: "user",
@@ -58,7 +66,7 @@ export async function analyzePhoto(buf: Buffer, mime: string, stepKey: string): 
             ],
           },
         ],
-        text: { format: { type: "json_schema", name: "photo_analysis", strict: true, schema } },
+        text: { format: { type: "json_schema", name: "photo_analysis", strict: true, schema: photoAnalysisSchema } },
       });
       return JSON.parse(res.output_text) as PhotoAnalysis;
     } catch (e) {

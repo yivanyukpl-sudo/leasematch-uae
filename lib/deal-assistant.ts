@@ -3,6 +3,8 @@
 
 import type { Lease, Property } from "./db";
 import { getOpenAI, OPENAI_MODEL } from "./openai";
+import { isClaudeConfigured } from "./claude";
+import { askClaudeDealAssistant } from "./deal-assistant-claude";
 import { getPackage, PACKAGES, STAY_IN_APP_ARGUMENT } from "./packages";
 
 const FAQ: { match: RegExp; answer: string }[] = [
@@ -16,14 +18,20 @@ const FAQ: { match: RegExp; answer: string }[] = [
 ];
 
 export async function answerDealQuestion(i: { question: string; lease: Lease; property: Property | null; role: "tenant" | "owner" }): Promise<string> {
-  const openai = getOpenAI();
   const pkg = getPackage(i.lease.package);
+  const system = `You are the LeaseMatch deal assistant guiding the ${i.role === "tenant" ? "tenant" : "landlord"} through a residential tenancy contract in the UAE. Reply in English, briefly (max 90 words), no Markdown. Never invent facts about the property — use only the context. If asked whether they can go direct without the app, explain honestly: ${STAY_IN_APP_ARGUMENT.join(" ")} Recommend a lawyer for complex cases.`;
+  const context = `Context: "${i.property?.title ?? "—"}", ${i.property?.location ?? ""}, AED ${i.property?.price ?? "?"}/year. Stage: ${i.lease.stage}. Package: ${pkg ? `${pkg.name} (AED ${pkg.price})` : "not chosen"}. Terms: ${i.lease.terms ?? "not filled yet"}.\n\nQuestion: ${i.question}`;
+  if (isClaudeConfigured()) {
+    const answer = await askClaudeDealAssistant(system, context);
+    if (answer) return answer;
+  }
+  const openai = getOpenAI();
   if (openai) {
     try {
       const res = await openai.responses.create({
         model: OPENAI_MODEL,
-        instructions: `You are the LeaseMatch deal assistant guiding the ${i.role === "tenant" ? "tenant" : "landlord"} through a residential tenancy contract in the UAE. Reply in English, briefly (max 90 words), no Markdown. Never invent facts about the property — use only the context. If asked whether they can go direct without the app, explain honestly: ${STAY_IN_APP_ARGUMENT.join(" ")} Recommend a lawyer for complex cases.`,
-        input: `Context: "${i.property?.title ?? "—"}", ${i.property?.location ?? ""}, AED ${i.property?.price ?? "?"}/year. Stage: ${i.lease.stage}. Package: ${pkg ? `${pkg.name} (AED ${pkg.price})` : "not chosen"}. Terms: ${i.lease.terms ?? "not filled yet"}.\n\nQuestion: ${i.question}`,
+        instructions: system,
+        input: context,
       });
       const text = res.output_text.trim();
       if (text) return text;
