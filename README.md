@@ -1,69 +1,121 @@
-# LeaseMatch UAE — hub71ai-leasematchuae
+# LeaseMatch UAE
 
-**Relocating to Abu Dhabi is hard to rent for.** Newcomers (founders on a Hub71
-visa, hires, families) don't know the areas or fair prices. They chase stale
-Bayut and Dubizzle ads, and burn days messaging agents who never reply.
-LeaseMatch gives them an AI rental agent that searches verified listings
-*and* today's public portal ads, contacts landlords for them, negotiates,
-and carries the deal through e-signature and payment.
+An AI rental agent for the UAE. It works for every side of a rental: tenants
+relocating to Abu Dhabi and Dubai, landlords, leasing offices, property
+management companies and agencies. It finds verified homes, checks today's
+Bayut and Dubizzle ads, matches tenants with landlords, and carries the deal
+through a guided contract, an AI photo inspection, e-signature and payment.
 
-- **Live demo:** https://hub71ai-leasematchuae.onrender.com
-- **Demo login (tenant):** `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026`
-- **Provider login:** `marina.pm@sample.leasematch.test` / `LeaseMatch-demo-2026`
+**Stage:** working prototype (pilot-ready). Real AI end to end; payments and
+agent phone calls are simulated, and listings are sample data.
 
-## What the AI does (OpenAI)
+- **Live prototype:** _add your Render link here_
+- **Tenant login:** `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026`
+- **Landlord logins:** `marina.pm@sample.leasematch.test`, `owner.skyline@sample.leasematch.test`, `meadows@sample.leasematch.test` — password `LeaseMatch-demo-2026`
 
-All model calls use the **OpenAI Responses API** (`gpt-5.5` by default,
-`OPENAI_MODEL` to override), server-side only:
+These are sample accounts on sample data.
 
-| Feature | Where | OpenAI tooling |
-|---|---|---|
-| Market search across Bayut & Dubizzle | `/dashboard/market`, `lib/market-search.ts` | Hosted `web_search` tool restricted to bayut.com / dubizzle.com (no scraping) + strict function tool `report_listings`. Every returned URL is checked against the search's actual sources, and anything else is dropped. |
-| Conversational rental agent | `/dashboard/assistant`, `lib/ai.ts` | Function calling: search verified listings with market comparables, apply, draft/revise/send outreach emails, plus web search |
-| Counter-offer drafting | lease sign step | Drafts a negotiation message when rent is priced above comparable listings |
+## What it does
 
-## Demo journey (3 minutes)
+| For | Features |
+| --- | --- |
+| Tenants | Preferences and match scores · AI agent chat · Bayut/Dubizzle market search with verified links · "Notify me" alerts when nothing fits · apply in one click |
+| Landlords, leasing offices, property managers | Listings · applicants with job, income and move-in date · AI photo inspection of the unit · alerts about waiting tenants |
+| Agencies | Transparent listings, with commission paid by the landlord, never the tenant |
+| Everyone in a deal | A deal assistant that guides each step: contract terms → package → AI photo inspection → signatures → payment → keys |
 
-1. Log in as the demo tenant. The dashboard shows Abu Dhabi matches ranked
-   against the saved profile ("relocating for Hub71").
-2. **Market search**: run a search (or open a saved one) for Al Reem Island.
-   You get live Bayut/Dubizzle ads, flagged unverified, each with a real link.
-3. Open an ad, then **Email advertiser** (composer pre-filled from the ad).
-4. **Agent call (simulated)**: the AI phones the advertiser, discloses it's an
-   AI, and negotiates. The transcript and outcome are saved to the call log.
-5. `/demos` → **Agent outreach simulation**: the full loop of portals, email,
-   phone, then a verified in-app chat where the deal is negotiated with tenant
-   approval at each step.
+### The AI (Claude)
 
-Simulated parts are labelled in the UI. Phone calls are scripted, and email
-sends for real only when Mailgun is configured (otherwise there's a one-click
-"open in my email app").
+All AI runs server-side on **Claude** (Anthropic SDK, `claude-opus-5-5`)
+when `ANTHROPIC_API_KEY` is set, with OpenAI as an optional fallback.
 
-## Data
+| Feature | Where | How |
+| --- | --- | --- |
+| Rental agent chat | `/dashboard/assistant` · `lib/ai-claude.ts` | Tool use: search verified listings with market comparables, apply, draft and send outreach emails, save alerts, plus web search on UAE portals. Portal links not returned by the search are removed. |
+| Market search | `/dashboard/market` · `lib/market-search-claude.ts` | Server-side web search restricted to Bayut and Dubizzle (no scraping) and a strict `report_listings` tool. Every URL is checked against the real search results. |
+| Deal assistant | lease page · `lib/deal-assistant.ts` | Answers questions at each step of the contract. |
+| AI photo inspection | `/dashboard/inspections` · `lib/inspection-ai.ts` | Room-by-room guided photos; Claude vision rates each photo and flags damp, cracks, dirty AC filters, leaks. |
 
-- 10 verified sample listings across Abu Dhabi (Al Maryah Island, Al Reem,
-  Corniche, Saadiyat, Yas, Al Raha, Khalifa City, Al Ghadeer) with generated
-  illustrations (`lib/seed.ts`, `scripts/generate-property-art.mjs`).
-- Every market search is stored (`market_searches`, `market_listings`), which
-  builds up a dataset of real, link-verified portal ads by area and budget over
-  time.
+Without any AI key the app still runs: the chat says it isn't connected, the
+photo check shows a clearly labelled demo, and the deal assistant uses
+built-in answers.
+
+## Try it (3 minutes)
+
+1. Open the **Demos** page and play a role simulation (tenant, landlord or agent).
+2. Log in as the tenant. The dashboard shows matches; ask the **AI agent**
+   for a home, or run a **market search** on Bayut and Dubizzle.
+3. Apply to a listing. In a second browser, log in as `marina.pm@…` and
+   approve the applicant.
+4. On the lease page, follow the **deal assistant**: terms, package (simulated
+   payment), AI photo inspection, sign on both sides, pay, confirm.
+
+Each main screen opens a short click-through guide on first visit; reopen it
+with **? Guide** at the bottom right.
 
 ## Run locally
 
 Requires Node 22.13+.
 
 ```bash
-cp .env.local.example .env.local   # set OPENAI_API_KEY
+cp .env.local.example .env.local   # add ANTHROPIC_API_KEY
 npx pnpm install
-npx pnpm dev
+./node_modules/.bin/next dev --port 3000
 ```
 
-SQLite lives at `data/leasematch.db` (set `LEASEMATCH_DB_PATH` to move it).
-See `TESTING.md` for full walkthroughs.
+The SQLite database and sample data are created on first start in
+`data/leasematch.db`.
 
-## Deploy (Render)
+| Variable | Purpose |
+| --- | --- |
+| `ANTHROPIC_API_KEY` (+ `CLAUDE_MODEL`) | Claude for all AI features |
+| `OPENAI_API_KEY` | Optional fallback when no Anthropic key is set |
+| `SESSION_SECRET` | Signs session cookies (required in production) |
+| `STRIPE_SECRET_KEY`, `NOWPAYMENTS_API_KEY` | Real payments; otherwise simulated |
+| `MAILGUN_API_KEY`, `MAILGUN_DOMAIN` | Real emails; otherwise printed to the console in dev |
+| `LEASEMATCH_DB_PATH`, `UPLOAD_DIR` | Database and uploaded photos location |
 
-`render.yaml` defines one Node web service with a 1 GB persistent disk for
-SQLite (`LEASEMATCH_DB_PATH=/var/data/leasematch.db`). In Render, choose
-**New → Blueprint**, pick this repo, and enter `OPENAI_API_KEY` when prompted.
-`SESSION_SECRET` is generated automatically.
+Checks:
+
+```bash
+./node_modules/.bin/next typegen && ./node_modules/.bin/tsc --noEmit
+./node_modules/.bin/eslint
+npm test
+```
+
+## Stack
+
+Next.js 16 (App Router, server actions) · React 19 · TypeScript ·
+Tailwind CSS v4 · SQLite (`node:sqlite`) · zod · JWT session cookies ·
+Anthropic SDK · Stripe / NOWPayments (optional) · Mailgun (optional).
+
+## Project map
+
+| Path | Contents |
+| --- | --- |
+| `app/` | Pages and API routes |
+| `app/dashboard/actions.ts` | Server actions: apply, approve, sign, pay, deal terms, packages |
+| `lib/db.ts`, `lib/seed.ts` | Schema, queries, sample data |
+| `lib/claude.ts`, `lib/ai-claude.ts`, `lib/market-search-claude.ts`, `lib/agent-tools.ts` | AI agent and market search |
+| `lib/deal.ts`, `lib/packages.ts` | Guided deal steps, contract template, package prices |
+| `lib/inspection-*.ts`, `lib/uploads.ts` | Photo inspection and private file storage |
+| `lib/alerts.ts` | "Notify me" alerts |
+| `public/simulations/` | Agent outreach and role click-through simulations |
+
+## Limitations
+
+- Bayut/Dubizzle search uses a search index, not direct portal access, so
+  results are mostly category pages and can be stale.
+- Agent phone calls and payments are simulated; package prices
+  (AED 99 / 149 / 199) are placeholders.
+- No UAE Pass, Ejari or Tawtheeq integration yet; the contract template
+  needs a lawyer's review.
+- No email verification, password reset or ownership-document check.
+- English only; one server instance (SQLite).
+
+## Deploy
+
+`render.yaml` is a Render Blueprint: one web service (starter plan) with a
+1 GB persistent disk for the database and uploads. In Render choose
+**New → Blueprint**, pick this repository, and enter `ANTHROPIC_API_KEY`
+when asked.

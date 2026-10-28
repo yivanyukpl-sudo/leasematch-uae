@@ -4,7 +4,7 @@
 # disk and sleep after 15 minutes idle.
 services:
   - type: web
-    name: hub71ai-leasematchuae
+    name: leasematch-uae
     runtime: node
     plan: starter
     region: frankfurt
@@ -20,10 +20,14 @@ services:
         value: "24"
       - key: LEASEMATCH_DB_PATH
         value: /var/data/leasematch.db
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
       - key: SESSION_SECRET
         generateValue: true
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: CLAUDE_MODEL
+        value: claude-opus-5-5
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
