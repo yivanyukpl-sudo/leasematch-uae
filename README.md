@@ -6,7 +6,7 @@ management companies and agencies. It finds verified homes, checks today's
 Bayut and Dubizzle ads, matches tenants with landlords, and carries the deal
 through a guided contract, an AI photo inspection, e-signature and payment.
 
-**Stage:** working prototype (pilot-ready). Real AI end to end; payments and
+**Stage:** Functional MVP. Real AI end to end; payments and
 agent phone calls are simulated, and listings are sample data.
 
 - **Live prototype:** https://leasematch-uae.onrender.com

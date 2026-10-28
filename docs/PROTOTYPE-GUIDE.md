@@ -9,7 +9,7 @@ signing and payment.
 **Live prototype:** https://leasematch-uae.onrender.com ·
 **Code:** https://github.com/yivanyukpl-sudo/leasematch-uae
 
-**Stage:** working prototype (pilot-ready). The AI is real; payments and agent
+**Stage:** Functional MVP. The AI is real; payments and agent
 phone calls are simulated; listings and accounts are sample data.
 
 ## Logging in
