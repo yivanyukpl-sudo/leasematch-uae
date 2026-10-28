@@ -89,20 +89,23 @@ export const signatureSchema = z.object({
   signatureName: z.string().trim().min(2, "Type your full legal name to sign"),
 });
 
-// Abu Dhabi first: LeaseMatch's launch market (Hub71 is on Al Maryah Island).
+// Dubai first, then Abu Dhabi: LeaseMatch covers both.
 export const commonLocations = [
-  "Al Maryah Island",
+  "Dubai Marina",
+  "Jumeirah Lake Towers",
+  "Downtown Dubai",
+  "Business Bay",
+  "Al Barsha",
+  "Jumeirah Village Circle",
+  "Arabian Ranches",
   "Al Reem Island",
+  "Al Maryah Island",
   "Abu Dhabi Corniche",
   "Saadiyat Island",
   "Yas Island",
   "Al Raha Beach",
   "Khalifa City",
   "Al Ghadeer",
-  "Dubai Marina",
-  "Downtown Dubai",
-  "Business Bay",
-  "Jumeirah Village Circle",
 ] as const;
 
 export const leaseTermsSchema = z.object({

@@ -1,7 +1,7 @@
 # LeaseMatch UAE — Functional MVP Guide
 
-LeaseMatch UAE is an AI rental agent for tenants relocating to Abu Dhabi and
-Dubai, and for the landlords, leasing offices, property management companies
+LeaseMatch UAE is an AI rental agent for tenants relocating to Dubai and
+Abu Dhabi, and for the landlords, leasing offices, property management companies
 and agencies on the other side of the deal. Tenants search verified listings
 and Bayut/Dubizzle ads; the app then handles applications, a guided lease,
 signing and payment.

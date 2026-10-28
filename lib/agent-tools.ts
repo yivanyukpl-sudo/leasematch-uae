@@ -72,7 +72,7 @@ export const toolDefs = [
         locations: {
           type: "array",
           items: { type: "string" },
-          description: `Area names. LeaseMatch areas: ${commonLocations.join(", ")}. Landmarks are fine too (e.g. "Hub71" is on Al Maryah Island). Omit or leave empty to match any location.`,
+          description: `Area names. LeaseMatch areas: ${commonLocations.join(", ")}. Landmarks are fine too (e.g. "Dubai Internet City", "DIFC", "JBR", "Hub71"). Omit or leave empty to match any location.`,
         },
         maxBudget: {
           type: "number",
@@ -185,7 +185,7 @@ export async function runTool(
       .map((p) => ({ property: p, score: scoreProperty(p, fakePrefs) }))
       .sort((a, b) => b.score - a.score);
 
-    // Forgiving matching: the model may say "studio", "Al Maryah" or "Hub71"
+    // Forgiving matching: the model may say "studio", "JLT" or "Dubai Internet City"
     // rather than the exact stored names, so compare case-insensitively,
     // allow partial matches either way, and also look in title/description.
     const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -194,7 +194,21 @@ export async function runTool(
       const y = norm(b);
       return x.length > 0 && y.length > 0 && (x.includes(y) || y.includes(x));
     };
-    const landmarkAreas: Record<string, string> = { hub71: "Al Maryah Island", adgm: "Al Maryah Island" };
+    const landmarkAreas: Record<string, string> = {
+      jbr: "Dubai Marina",
+      dubaimediacity: "Dubai Marina",
+      mediacity: "Dubai Marina",
+      jlt: "Jumeirah Lake Towers",
+      dmcc: "Jumeirah Lake Towers",
+      dubaiinternetcity: "Al Barsha",
+      internetcity: "Al Barsha",
+      mallofemirates: "Al Barsha",
+      difc: "Downtown Dubai",
+      burjkhalifa: "Downtown Dubai",
+      dubaimall: "Downtown Dubai",
+      hub71: "Al Maryah Island",
+      adgm: "Al Maryah Island",
+    };
     const wantedAreas = locations.map((l) => landmarkAreas[norm(l).replace(/ /g, "")] ?? l);
 
     if (propertyTypes.length) {

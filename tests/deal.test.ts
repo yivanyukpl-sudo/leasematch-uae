@@ -20,12 +20,12 @@ test("combo costs less than both packages", () => {
 });
 
 test("contract uses annual rent split into cheques", () => {
-  const all = contractText({ ownerName: "Rashid", tenantName: "Priya", address: "Al Reem Island", rent: 85000, terms }).clauses.join(" ");
+  const all = contractText({ ownerName: "Rashid", tenantName: "Priya", address: "Jumeirah Lake Towers, Dubai", rent: 85000, terms }).clauses.join(" ");
   assert.match(all, /AED 85,000 per year, paid in 4 cheques of AED 21,250/);
 });
 
 test("alerts and inspection summary", () => {
-  assert.ok(alertMatches({ location: "Al Reem", max_price: 90000, min_beds: null, property_type: null }, { location: "Al Reem Island, Abu Dhabi", price: 85000, beds: 1, property_type: "Apartment" }));
+  assert.ok(alertMatches({ location: "Dubai Marina", max_price: 170000, min_beds: null, property_type: null }, { location: "Dubai Marina, Dubai", price: 165000, beds: 2, property_type: "Apartment" }));
   const s = summarize([{ step: "bathroom", a: { quality: "ok", retakeReason: null, condition: 2, issues: [{ severity: "high", title: "Mould", detail: "" }], summary: "" } }]);
   assert.equal(s.verdict, "warning");
 });

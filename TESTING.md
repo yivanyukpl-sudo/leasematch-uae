@@ -209,7 +209,7 @@ you just won't see replies land back in the thread automatically.
 
 ## Sample property database
 
-On first boot the app seeds 10 live Abu Dhabi listings (fixed ids `seed-prop-01`…`10`)
+On first boot the app seeds 10 live listings (7 in Dubai, 3 in Abu Dhabi) (fixed ids `seed-prop-01`…`10`)
 from three sample provider accounts. That's the same portfolio as the HTML
 prototypes: Marina Property Management, Meadows Estates and Skyline Leasing Co.
 Each listing has two abstract illustrated photos (exterior + interior) in
@@ -220,7 +220,7 @@ Each listing has two abstract illustrated photos (exterior + interior) in
 - The seed is idempotent and never overwrites edits. Delete
   `data/leasematch.db` to start fresh, or set `LEASEMATCH_DISABLE_SEED=1`
   to skip it.
-- The two Abu Dhabi Corniche 1-bed apartments are deliberately comparable, and
+- The two JLT 1-bed apartments are deliberately comparable, and
   "1BR Corniche Tower — open to offers" is priced 28% above the other. Apply to
   it as a tenant, approve as Skyline, and the sign-step pricing nudge appears.
 
@@ -230,7 +230,7 @@ three use the password in `SAMPLE_PROVIDER_PASSWORD` in `lib/seed.ts`:
 - `meadows@sample.leasematch.test` (broker)
 - `owner.skyline@sample.leasematch.test` (owner)
 
-**Demo tenant** (seeded, with Abu Dhabi preferences):
+**Demo tenant** (seeded, with Dubai Marina / JLT preferences):
 `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026` (see `demoTenant`
 in `lib/seed.ts`).
 

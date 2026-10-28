@@ -1,7 +1,7 @@
 # LeaseMatch UAE
 
 An AI rental agent for the UAE. It works for every side of a rental: tenants
-relocating to Abu Dhabi and Dubai, landlords, leasing offices, property
+relocating to Dubai and Abu Dhabi, landlords, leasing offices, property
 management companies and agencies. It finds verified homes, checks today's
 Bayut and Dubizzle ads, matches tenants with landlords, and carries the deal
 through a guided contract, an AI photo inspection, e-signature and payment.

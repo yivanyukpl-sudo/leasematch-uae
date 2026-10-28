@@ -66,7 +66,7 @@ export default async function Home() {
               Matched, verified, signed.
             </h1>
             <p className="mt-5 text-lg text-text-muted max-w-xl mx-auto">
-              Relocating to Abu Dhabi? LeaseMatch connects newcomers with verified owners, brokers
+              Moving to Dubai? LeaseMatch connects newcomers with verified owners, brokers
               and property managers. An AI agent searches LeaseMatch and today&apos;s Bayut and
               Dubizzle ads, contacts landlords for you and negotiates, from first search to
               signed agreement.

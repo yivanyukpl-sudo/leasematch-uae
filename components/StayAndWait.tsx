@@ -38,7 +38,7 @@ export function StayAndWait({
           <input type="hidden" name="back" value={back} />
           <label className="text-xs font-medium">
             Area
-            <input name="location" defaultValue={filters?.location ?? ""} placeholder="e.g. Al Reem Island" className="mt-1 block rounded-md border px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+            <input name="location" defaultValue={filters?.location ?? ""} placeholder="e.g. Dubai Marina" className="mt-1 block rounded-md border px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
           </label>
           {tenant && (
             <>

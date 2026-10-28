@@ -62,16 +62,16 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-01",
     providerId: "seed-provider-marina",
-    title: "2BR Sea View, Sky Tower",
+    title: "2BR Sea View, Marina Gate",
     propertyType: "Apartment",
-    location: "Al Reem Island",
-    price: 120000,
+    location: "Dubai Marina",
+    price: 165000,
     beds: 2,
     baths: 3,
     sqft: 1290,
     furnished: "unfurnished",
     description:
-      "High-floor two-bedroom with open sea views across to Al Maryah Island — a 10-minute walk over the bridge to Hub71 and ADGM. Gym, pool and covered parking.",
+      "High-floor two-bedroom with open views over the marina — a short walk to Marina Walk, JBR beach, the tram and Dubai Marina metro. Gym, pool and covered parking.",
     amenities: ["Pool", "Gym", "Covered parking", "Security", "Balcony"],
     daysListed: 41,
     photo: "lm-01",
@@ -79,33 +79,33 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-02",
     providerId: "seed-provider-marina",
-    title: "1BR Canal View, Al Bandar",
+    title: "1BR Canal View, Business Bay",
     propertyType: "Apartment",
-    location: "Al Raha Beach",
-    price: 85000,
+    location: "Business Bay",
+    price: 95000,
     beds: 1,
     baths: 2,
     sqft: 880,
     furnished: "unfurnished",
     description:
-      "Waterfront one-bedroom on the Al Raha canal promenade with beach club access. Easy commute to Yas Island and Khalifa University.",
-    amenities: ["Pool", "Gym", "Beach access", "Covered parking"],
+      "One-bedroom on the Dubai Canal promenade, a few minutes from Downtown Dubai and DIFC. Residents' pool, gym and canal-side running track.",
+    amenities: ["Pool", "Gym", "Covered parking", "Balcony"],
     daysListed: 9,
     photo: "lm-02",
   },
   {
     id: "seed-prop-03",
     providerId: "seed-provider-skyline",
-    title: "1BR in Corniche Residences",
+    title: "1BR in JLT, Cluster D",
     propertyType: "Apartment",
-    location: "Abu Dhabi Corniche",
-    price: 92000,
+    location: "Jumeirah Lake Towers",
+    price: 85000,
     beds: 1,
     baths: 1,
     sqft: 780,
     furnished: "furnished",
     description:
-      "Furnished one-bedroom facing the Corniche beach and parks. Building service charges included in the rent; concierge on site.",
+      "Furnished one-bedroom by the lake in JLT, a 5-minute walk to DMCC metro and close to Dubai Internet City and Media City. Chiller included; concierge on site.",
     amenities: ["Pool", "Gym", "Security", "Central AC"],
     daysListed: 23,
     photo: "lm-03",
@@ -113,16 +113,16 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-04",
     providerId: "seed-provider-skyline",
-    title: "1BR Corniche Tower — open to offers",
+    title: "1BR JLT Lake View — open to offers",
     propertyType: "Apartment",
-    location: "Abu Dhabi Corniche",
-    price: 118000,
+    location: "Jumeirah Lake Towers",
+    price: 115000,
     beds: 1,
     baths: 2,
     sqft: 860,
     furnished: "furnished",
     description:
-      "Fully furnished one-bedroom with a large balcony over the Corniche. The asking rent sits well above comparable units in the area — the landlord is open to offers.",
+      "Fully furnished one-bedroom with a large balcony over the JLT lakes. The asking rent sits well above comparable units in the area — the landlord is open to offers.",
     amenities: ["Pool", "Gym", "Balcony", "Security", "Covered parking"],
     daysListed: 64,
     photo: "lm-04",
@@ -130,16 +130,16 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-05",
     providerId: "seed-provider-meadows",
-    title: "Studio steps from Hub71, Al Maryah Island",
+    title: "Studio near Dubai Internet City, Al Barsha",
     propertyType: "Studio",
-    location: "Al Maryah Island",
-    price: 68000,
+    location: "Al Barsha",
+    price: 55000,
     beds: 0,
     baths: 1,
     sqft: 520,
     furnished: "furnished",
     description:
-      "Compact furnished studio a 5-minute walk from Hub71 and The Galleria — ideal for founders relocating on a startup visa. Utilities not included.",
+      "Compact furnished studio near Mall of the Emirates metro, a short ride to Dubai Internet City and Media City — ideal for professionals relocating for a new job. DEWA not included.",
     amenities: ["Gym", "Pool", "Security"],
     daysListed: 67,
     photo: "lm-05",
@@ -181,16 +181,16 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-08",
     providerId: "seed-provider-skyline",
-    title: "4BR Family Villa, Khalifa City",
+    title: "4BR Family Villa, Arabian Ranches",
     propertyType: "Villa",
-    location: "Khalifa City",
-    price: 170000,
+    location: "Arabian Ranches",
+    price: 290000,
     beds: 4,
     baths: 5,
     sqft: 4200,
     furnished: "unfurnished",
     description:
-      "Detached family villa on a quiet street near several international schools and the airport road. Recently repainted throughout.",
+      "Detached family villa on a quiet street in Arabian Ranches, close to international schools, the golf club and community pools. Recently repainted throughout.",
     amenities: ["Pool", "Maid's room", "Covered parking", "Pet friendly", "Security"],
     daysListed: 33,
     photo: "lm-08",
@@ -215,16 +215,16 @@ export const sampleProperties: SampleProperty[] = [
   {
     id: "seed-prop-10",
     providerId: "seed-provider-skyline",
-    title: "Penthouse with Terrace, Al Reem",
+    title: "Penthouse with Burj View, Downtown Dubai",
     propertyType: "Penthouse",
-    location: "Al Reem Island",
-    price: 290000,
+    location: "Downtown Dubai",
+    price: 420000,
     beds: 3,
     baths: 4,
     sqft: 3400,
     furnished: "furnished",
     description:
-      "Duplex penthouse with a 900 sqft private terrace and panoramic views over the Abu Dhabi skyline and mangroves. Fully furnished by an interior designer.",
+      "Duplex penthouse with a 900 sqft private terrace and views of Burj Khalifa and the Dubai Fountain. Fully furnished by an interior designer; steps from Dubai Mall.",
     amenities: ["Pool", "Gym", "Balcony", "Covered parking", "Security", "Central AC"],
     daysListed: 88,
     photo: "lm-10",
@@ -242,7 +242,7 @@ export const demoTenant = {
 export function seedSampleData(db: DatabaseSync) {
   if (process.env.LEASEMATCH_DISABLE_SEED === "1") return;
 
-  const SEED_VERSION = "2-abu-dhabi";
+  const SEED_VERSION = "3-dubai-first";
   db.exec(`CREATE TABLE IF NOT EXISTS seed_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
   const current = db.prepare(`SELECT value FROM seed_meta WHERE key = 'version'`).get() as
     | { value: string }
@@ -261,14 +261,16 @@ export function seedSampleData(db: DatabaseSync) {
     `INSERT OR IGNORE INTO profiles (id, email, password_hash, role, full_name) VALUES (?, ?, ?, 'tenant', ?)`
   ).run(demoTenant.id, demoTenant.email, bcrypt.hashSync(demoTenant.password, 10), demoTenant.fullName);
   db.prepare(
-    `INSERT OR IGNORE INTO tenant_preferences (profile_id, property_types, locations, budget, furnished, notes)
-     VALUES (?, ?, ?, ?, NULL, ?)`
+    `INSERT INTO tenant_preferences (profile_id, property_types, locations, budget, furnished, notes)
+     VALUES (?, ?, ?, ?, NULL, ?)
+     ON CONFLICT (profile_id) DO UPDATE SET property_types = excluded.property_types,
+       locations = excluded.locations, budget = excluded.budget, notes = excluded.notes`
   ).run(
     demoTenant.id,
     JSON.stringify(["Apartment", "Studio"]),
-    JSON.stringify(["Al Maryah Island", "Al Reem Island"]),
+    JSON.stringify(["Dubai Marina", "Jumeirah Lake Towers"]),
     130000,
-    "Relocating to Abu Dhabi for a Hub71 startup; would like to walk or cycle to Al Maryah Island."
+    "Relocating to Dubai for a new job in Dubai Internet City; would like to be near the metro around Dubai Marina or JLT."
   );
 
   // Upsert so content changes to the sample set reach existing databases;

@@ -248,15 +248,15 @@
 
 <script>
 /* ---------------- sample data ---------------- */
-const tenant = { name:'Sara M.', first:'Sara', need:'2-bedroom apartment', areas:['Al Reem Island','Al Raha Beach'], budget:140000, moveIn:'1 Nov', extras:['Pet friendly (1 cat)','Parking','Gym'] };
+const tenant = { name:'Sara M.', first:'Sara', need:'2-bedroom apartment', areas:['Dubai Marina','JLT'], budget:140000, moveIn:'1 Nov', extras:['Pet friendly (1 cat)','Parking','Gym'] };
 const hue = i => { const hs=[200,25,170,95,260,45]; const a=hs[i%hs.length], b=hs[(i+2)%hs.length]; return `background:linear-gradient(135deg,hsl(${a} 38% 76%),hsl(${b} 30% 60%))`; };
 const found = [
-  {id:'A', portal:'Bayut',    title:'2BR, Sun Tower — canal view', area:'Al Reem Island', price:135000, sqft:1180, days:45, contact:'Form on listing', who:'Harbour Homes Real Estate', match:92, flags:[['warn','Listed 45 days — likely negotiable']]},
-  {id:'B', portal:'Bayut',    title:'2BR, Gate Tower 2 — upgraded kitchen', area:'Al Reem Island', price:142000, sqft:1250, days:6, contact:'Form on listing', who:'Coastline Properties', match:84, flags:[['crit','1.4% over budget']]},
-  {id:'C', portal:'Dubizzle', title:'2BR in Al Bandar, Al Raha — owner direct, pets OK', area:'Al Raha Beach', price:118000, sqft:1320, days:19, contact:'Chat + email on ad', who:'Owner (direct)', match:95, flags:[['ok','Pets allowed in ad']]},
-  {id:'D', portal:'Dubizzle', title:'2BR, Al Muneera — high floor', area:'Al Raha Beach', price:121000, sqft:1150, days:2, contact:'Chat on ad', who:'Private seller', match:80, flags:[['warn','No parking mentioned']]},
-  {id:'E', portal:'Bayut',    title:'2BR + maid, Marina Square', area:'Al Reem Island', price:165000, sqft:1480, days:12, contact:'Form on listing', who:'Pinnacle Realty', match:52, flags:[['crit','18% over budget']]},
-  {id:'F', portal:'Dubizzle', title:'2BR, Al Zeina — chiller free', area:'Al Raha Beach', price:112000, sqft:1210, days:33, contact:'Phone only', who:'Agent: R. Kapoor', match:88, flags:[['blue','Phone-only listing']]},
+  {id:'A', portal:'Bayut',    title:'2BR, Marina Pinnacle — marina view', area:'Dubai Marina', price:135000, sqft:1180, days:45, contact:'Form on listing', who:'Harbour Homes Real Estate', match:92, flags:[['warn','Listed 45 days — likely negotiable']]},
+  {id:'B', portal:'Bayut',    title:'2BR, Princess Tower — upgraded kitchen', area:'Dubai Marina', price:142000, sqft:1250, days:6, contact:'Form on listing', who:'Coastline Properties', match:84, flags:[['crit','1.4% over budget']]},
+  {id:'C', portal:'Dubizzle', title:'2BR in Lake Terrace, JLT — owner direct, pets OK', area:'JLT', price:118000, sqft:1320, days:19, contact:'Chat + email on ad', who:'Owner (direct)', match:95, flags:[['ok','Pets allowed in ad']]},
+  {id:'D', portal:'Dubizzle', title:'2BR, Goldcrest Views — high floor', area:'JLT', price:121000, sqft:1150, days:2, contact:'Chat on ad', who:'Private seller', match:80, flags:[['warn','No parking mentioned']]},
+  {id:'E', portal:'Bayut',    title:'2BR + maid, Marina Gate', area:'Dubai Marina', price:165000, sqft:1480, days:12, contact:'Form on listing', who:'Pinnacle Realty', match:52, flags:[['crit','18% over budget']]},
+  {id:'F', portal:'Dubizzle', title:'2BR, Al Seef Tower — chiller free', area:'JLT', price:112000, sqft:1210, days:33, contact:'Phone only', who:'Agent: R. Kapoor', match:88, flags:[['blue','Phone-only listing']]},
 ];
 
 /* ---------------- engine ---------------- */
@@ -321,16 +321,16 @@ const scenes = [
         </div>
       </div>`;
     log('🧑', `${tenant.name} opens a chat with her agent`, 0);
-    await type($('#b1'), "Hi! I'm relocating to Abu Dhabi for a Hub71 startup. I need a 2-bed on Al Reem or Al Raha Beach, max 140k a year, moving 1 November. I have a cat, so it has to be pet friendly. Parking and a gym would be nice.");
+    await type($('#b1'), "Hi! I'm relocating to Dubai for a new job in Dubai Internet City. I need a 2-bed in Dubai Marina or JLT, max 140k a year, moving 1 November. I have a cat, so it has to be pet friendly. Parking and a gym would be nice.");
     await wait(600);
     $('#b2wrap').style.display = '';
-    await type($('#b2'), "Got it. LeaseMatch has 1 verified 2-bed on Al Reem at AED 120k. Want me to also check today's public ads on Bayut and Dubizzle and reach out to the best ones for you? I'll check with you before contacting anyone and before agreeing to anything.");
+    await type($('#b2'), "Got it. LeaseMatch has 1 verified 2-bed in Dubai Marina, but at AED 165k it's over your budget. Want me to also check today's public ads on Bayut and Dubizzle and reach out to the best ones for you? I'll check with you before contacting anyone and before agreeing to anything.");
     await wait(500);
     $('#b3wrap').style.display = '';
     await type($('#b3'), 'Yes please, go ahead.');
     const rows = [['Type', tenant.need], ['Areas', tenant.areas.join(', ')], ['Budget', money(tenant.budget)+' / yr'], ['Move-in', tenant.moveIn], ['Must have', 'Pet friendly'], ['Nice to have', 'Parking, gym'], ['Sources', 'LeaseMatch verified + Bayut + Dubizzle']];
     for(const [k,v] of rows){ $('#kv').insertAdjacentHTML('beforeend', `<span class="k fade-in">${k}</span><span class="fade-in"><b>${v}</b></span>`); await wait(220); }
-    log('🧠', 'Brief structured: <b>2BR · Reem/Raha · ≤140k · pets</b>');
+    log('🧠', 'Brief structured: <b>2BR · Marina/JLT · ≤140k · pets</b>');
     approval('Search Bayut & Dubizzle on my behalf', 'ok');
     await wait(1400);
   }},
@@ -339,13 +339,13 @@ const scenes = [
     stage.innerHTML = head('Step 2 · Search', 'Searching today\'s public ads', 'Hosted web search API · no scraping') + `
       <div class="searchline"><span>🔎</span><span id="q" class="mono" style="flex:1"></span><span class="badge">Search API · no scraping</span></div>
       <div class="browsers">
-        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">bayut.com/to-rent/2-bedroom-apartments/abu-dhabi/al-reem-island</span></div>
+        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">bayut.com/to-rent/2-bedroom-apartments/dubai/dubai-marina</span></div>
           <div class="portal-head portal-a">Bayut <small>simulated view</small></div><div class="results" id="r1"></div></div>
-        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">abudhabi.dubizzle.com/property-for-rent/residential/apartmentflat/al-raha-beach</span></div>
+        <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">dubai.dubizzle.com/property-for-rent/residential/apartmentflat/jlt</span></div>
           <div class="portal-head portal-b">Dubizzle <small>simulated view</small></div><div class="results" id="r2"></div></div>
       </div>
       <p class="faint" style="font-size:12px;margin-top:12px">Only links that come back from a real search result are kept. Anything the model can't tie to a returned URL is dropped.</p>`;
-    const queries = ['2 bedroom apartment for rent Al Reem Island pet friendly site:bayut.com', '2BR flat for rent Al Raha Beach under 140000 site:dubizzle.com'];
+    const queries = ['2 bedroom apartment for rent Dubai Marina pet friendly site:bayut.com', '2BR flat for rent JLT under 140000 site:dubizzle.com'];
     for(const q of queries){
       await type($('#q'), q, 70);
       log('🔎', `Search: <span class="mono" style="font-size:11.5px">${q.split(' site:')[0]}</span>`, 2);
@@ -372,11 +372,11 @@ const scenes = [
         <td>${f.flags.map(([c,t])=>`<span class="badge ${c==='ok'?'':c}">${t}</span>`).join(' ')}</td></tr>`);
       await wait(320);
     }
-    log('📊', 'Ranked 6 ads. <b>Marina Square</b> dropped (18% over budget)', 2);
+    log('📊', 'Ranked 6 ads. <b>Marina Gate</b> dropped (18% over budget)', 2);
     await wait(700);
     const picks = ['C','A','F'];
     for(const id of picks){ $('#row'+id).classList.add('pick'); await wait(350); }
-    $('#apprSlot').innerHTML = `<div class="approval-card fade-in"><div><b>Contact these 3 advertisers?</b><div class="muted" style="font-size:13px">Al Bandar (owner, Dubizzle) · Sun Tower (agency, Bayut) · Al Zeina (agent, phone only)</div></div><span class="badge warn" id="apprState">Waiting for ${tenant.first}</span></div>`;
+    $('#apprSlot').innerHTML = `<div class="approval-card fade-in"><div><b>Contact these 3 advertisers?</b><div class="muted" style="font-size:13px">Lake Terrace (owner, Dubizzle) · Marina Pinnacle (agency, Bayut) · Al Seef Tower (agent, phone only)</div></div><span class="badge warn" id="apprState">Waiting for ${tenant.first}</span></div>`;
     approval('Contact 3 shortlisted advertisers', 'wait');
     log('🙋', `Asked ${tenant.first} to approve outreach to 3 ads`, 1);
     await wait(2200);
@@ -389,25 +389,25 @@ const scenes = [
   { name:'Reach out', run: async () => {
     stage.innerHTML = head('Step 4 · Reach out', 'Contacting landlords on the portals themselves', 'Each message says an AI is writing for a tenant') + `
       <div class="outreach">
-        <div class="browser"><div class="bar"><span class="url">bayut.com · Sun Tower</span></div><div class="portal-head portal-a">Bayut enquiry form <small>simulated</small></div>
+        <div class="browser"><div class="bar"><span class="url">bayut.com · Marina Pinnacle</span></div><div class="portal-head portal-a">Bayut enquiry form <small>simulated</small></div>
           <div class="form-mock"><span class="fm-label">Name</span><div class="fm-field" id="f1n"></div><span class="fm-label">Email</span><div class="fm-field mono" id="f1e" style="font-size:11px"></div><span class="fm-label">Message</span><div class="fm-field area" id="f1m"></div><button class="fm-btn portal-a" id="f1b">Send enquiry</button><span id="f1s"></span></div></div>
-        <div class="browser"><div class="bar"><span class="url">dubizzle.com · Al Bandar (owner)</span></div><div class="portal-head portal-b">Dubizzle chat <small>simulated</small></div>
+        <div class="browser"><div class="bar"><span class="url">dubizzle.com · Lake Terrace (owner)</span></div><div class="portal-head portal-b">Dubizzle chat <small>simulated</small></div>
           <div class="form-mock"><span class="fm-label">Message to owner</span><div class="fm-field area" id="f2m"></div><button class="fm-btn portal-b" id="f2b">Send</button><span id="f2s"></span></div></div>
         <div class="browser"><div class="bar"><span class="url">LeaseMatch relay · email</span></div><div class="portal-head" style="background:var(--accent)">Email to address on the ad</div>
-          <div class="form-mock"><span class="fm-label">To</span><div class="fm-field mono" style="font-size:11px">owner.albandar@example.ae</div><span class="fm-label">Subject</span><div class="fm-field" id="f3s"></div><span class="fm-label">Body</span><div class="fm-field area" id="f3m"></div><button class="fm-btn" style="background:var(--accent)" id="f3b">Send</button><span id="f3x"></span></div></div>
+          <div class="form-mock"><span class="fm-label">To</span><div class="fm-field mono" style="font-size:11px">owner.laketerrace@example.ae</div><span class="fm-label">Subject</span><div class="fm-field" id="f3s"></div><span class="fm-label">Body</span><div class="fm-field area" id="f3m"></div><button class="fm-btn" style="background:var(--accent)" id="f3b">Send</button><span id="f3x"></span></div></div>
       </div>
-      <p class="faint" style="font-size:12px;margin-top:12px">Replies go to a per-inquiry relay address (<span class="mono">inquiry-7f3a…@mail.leasematch</span>) and land in the tenant's thread, not their personal inbox. Al Zeina is phone-only, so it gets a call later.</p>`;
+      <p class="faint" style="font-size:12px;margin-top:12px">Replies go to a per-inquiry relay address (<span class="mono">inquiry-7f3a…@mail.leasematch</span>) and land in the tenant's thread, not their personal inbox. Al Seef Tower is phone-only, so it gets a call later.</p>`;
     await type($('#f1n'), `${tenant.name} (via LeaseMatch agent)`, 90);
     await type($('#f1e'), 'inquiry-7f3a@mail.leasematch.ae', 90);
     await type($('#f1m'), `Hello, I'm an AI assistant from LeaseMatch writing for a tenant, ${tenant.first}. She's interested in this 2BR from 1 Nov and has a cat. Is the unit pet friendly, is the rent negotiable on 4 cheques, and could she view it this week?`, 110);
     $('#f1b').textContent = 'Sent ✓'; $('#f1s').innerHTML = '<span class="sent-stamp">Enquiry submitted on Bayut</span>';
-    log('📝', 'Submitted the <b>Bayut</b> enquiry form for Sun Tower', 4);
+    log('📝', 'Submitted the <b>Bayut</b> enquiry form for Marina Pinnacle', 4);
     await wait(500);
-    await type($('#f2m'), `Hi! AI assistant from LeaseMatch here, on behalf of tenant ${tenant.first}. Your ad says pets are OK. She'd like to view Al Bandar this week and can move in 1 Nov. Is it still available?`, 110);
+    await type($('#f2m'), `Hi! AI assistant from LeaseMatch here, on behalf of tenant ${tenant.first}. Your ad says pets are OK. She'd like to view Lake Terrace this week and can move in 1 Nov. Is it still available?`, 110);
     $('#f2b').textContent = 'Sent ✓'; $('#f2s').innerHTML = '<span class="sent-stamp">Delivered in Dubizzle chat</span>';
-    log('💬', 'Messaged the <b>Dubizzle</b> owner of Al Bandar', 3);
+    log('💬', 'Messaged the <b>Dubizzle</b> owner of Lake Terrace', 3);
     await wait(400);
-    await type($('#f3s'), 'Al Bandar 2BR — tenant ready to view', 90);
+    await type($('#f3s'), 'Lake Terrace 2BR — tenant ready to view', 90);
     await type($('#f3m'), `Following up by email in case chat isn't monitored. ${tenant.first} works in finance, has documents ready and would sign a 12-month lease.\n\nSent via LeaseMatch on behalf of a prospective tenant. LeaseMatch is not the listing agent.`, 120);
     $('#f3b').textContent = 'Sent ✓'; $('#f3x').innerHTML = '<span class="sent-stamp">Email sent via relay</span>';
     log('✉️', 'Emailed the owner at the address <b>published in the ad</b>', 2);
@@ -417,13 +417,13 @@ const scenes = [
   { name:'Replies', run: async () => {
     stage.innerHTML = head('Step 5 · Replies', 'Responses come back into one thread', 'The agent reads, classifies and suggests next steps') + `<div class="inbox" id="inbox"></div>`;
     const mails = [
-      {av:'K', color:'var(--portal-b)', from:'Khalid (owner) · Al Bandar, Al Raha Beach', via:'Dubizzle chat', time:'+42 min', snip:'"Yes, still available and cats are fine. I could do viewings Wednesday evening. Asking 118k but open to discussion for a long lease."', note:'🟢 Hot lead: available, pets OK, open to negotiating. Next step: invite to a LeaseMatch chat.'},
-      {av:'H', color:'var(--portal-a)', from:'Harbour Homes Real Estate · Sun Tower', via:'Bayut enquiry → relay email', time:'+2 h', snip:'"Thanks for your enquiry. Unfortunately the landlord doesn\'t accept pets in this unit. We have a similar unit in Sky Tower at AED 149k."', note:'🔴 Rules out the must-have (pets). Similar unit is over budget. Closing politely.'},
-      {av:'R', color:'var(--warn)', from:'Al Zeina (R. Kapoor)', via:'Phone-only listing', time:'no written channel', snip:'No email or chat on the ad, only a phone number.', note:'📞 Scheduling a phone call (simulated) to ask about availability and pets.'},
+      {av:'K', color:'var(--portal-b)', from:'Khalid (owner) · Lake Terrace, JLT Beach', via:'Dubizzle chat', time:'+42 min', snip:'"Yes, still available and cats are fine. I could do viewings Wednesday evening. Asking 118k but open to discussion for a long lease."', note:'🟢 Hot lead: available, pets OK, open to negotiating. Next step: invite to a LeaseMatch chat.'},
+      {av:'H', color:'var(--portal-a)', from:'Harbour Homes Real Estate · Marina Pinnacle', via:'Bayut enquiry → relay email', time:'+2 h', snip:'"Thanks for your enquiry. Unfortunately the landlord doesn\'t accept pets in this unit. We have a similar unit in Sky Tower at AED 149k."', note:'🔴 Rules out the must-have (pets). Similar unit is over budget. Closing politely.'},
+      {av:'R', color:'var(--warn)', from:'Al Seef Tower (R. Kapoor)', via:'Phone-only listing', time:'no written channel', snip:'No email or chat on the ad, only a phone number.', note:'📞 Scheduling a phone call (simulated) to ask about availability and pets.'},
     ];
     for(const m of mails){
       $('#inbox').insertAdjacentHTML('beforeend', `<div class="mail"><div class="av" style="background:${m.color}">${m.av}</div><div><div class="from">${m.from}</div><div class="faint" style="font-size:11.5px">${m.via}</div><div class="snip">${m.snip}</div><div class="agent-note">${m.note}</div></div><div class="faint mono" style="font-size:11px">${m.time}</div></div>`);
-      log(m.av==='K'?'🟢':m.av==='H'?'🔴':'📞', m.av==='K'?'Reply from <b>Al Bandar</b> owner: available, pets OK':m.av==='H'?'<b>Sun Tower</b>: no pets. Closed with a thank-you':'<b>Al Zeina</b> is phone-only. Call queued', m.av==='K'?42:m.av==='H'?78:5);
+      log(m.av==='K'?'🟢':m.av==='H'?'🔴':'📞', m.av==='K'?'Reply from <b>Lake Terrace</b> owner: available, pets OK':m.av==='H'?'<b>Marina Pinnacle</b>: no pets. Closed with a thank-you':'<b>Al Seef Tower</b> is phone-only. Call queued', m.av==='K'?42:m.av==='H'?78:5);
       await wait(1500);
     }
     await wait(900);
@@ -433,21 +433,21 @@ const scenes = [
     stage.innerHTML = head('Step 6 · Phone call', 'The agent calls the phone-only listing', 'Simulated: no real call is placed') + `
       <div class="phone-wrap">
         <div class="phone"><div class="ring"><span class="pulse" id="pulse"></span><span class="face">R</span></div>
-          <div style="font-weight:600">R. Kapoor · Al Zeina</div><div class="status" id="pstatus">Dialling +971 ••• ••381…</div>
+          <div style="font-weight:600">R. Kapoor · Al Seef Tower</div><div class="status" id="pstatus">Dialling +971 ••• ••381…</div>
           <div class="wave" id="wave">${'<i></i>'.repeat(11)}</div><div class="status" id="pspeaker" style="height:16px"></div></div>
         <div><div class="transcript" id="tr"></div><div id="callSummary"></div></div>
       </div>`;
-    log('📞', 'Calling <b>Al Zeina</b> agent (simulated)', 3);
+    log('📞', 'Calling <b>Al Seef Tower</b> agent (simulated)', 3);
     await wait(1600); $('#pstatus').textContent = 'Ringing…';
     await wait(2000); $('#pulse').style.display = 'none';
     let secs = 0; clearInterval(phoneTimer); const timer = phoneTimer = setInterval(()=>{ if(!paused){ secs++; const el = document.getElementById('pstatus'); if(el) el.textContent = `${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`; } }, 1000/speed);
     const lines = [
-      ['agent', "Hi, this is Leah, an AI assistant from LeaseMatch calling for a tenant named Sara. It's about your Dubizzle ad for the 2-bed in Al Zeina. Do you have two minutes?"],
+      ['agent', "Hi, this is Leah, an AI assistant from LeaseMatch calling for a tenant named Sara. It's about your Dubizzle ad for the 2-bed in Al Seef Tower. Do you have two minutes?"],
       ['callee', 'Sure. An AI, okay! Yes, the 2-bed is available.'],
       ['agent', 'Great. Sara has a cat. Is the building pet friendly, and does the unit come with parking?'],
       ['callee', "Sorry, the building doesn't allow pets. One parking space though, and chiller is free."],
       ['agent', "Thanks, that's really helpful. A pet-friendly home is a must for her, so I'll let her know. Could I keep your number in case a pet-friendly unit comes up?"],
-      ['callee', 'Of course, I list on Al Raha Beach all the time. Send me her requirements by WhatsApp.'],
+      ['callee', 'Of course, I list in JLT all the time. Send me her requirements by WhatsApp.'],
       ['agent', 'Will do. Thank you for your time!'],
     ];
     const bars = [...document.querySelectorAll('#wave i')];
@@ -463,7 +463,7 @@ const scenes = [
     clearInterval(timer);
     $('#pspeaker').textContent = ''; $('#pstatus').textContent = 'Call ended';
     $('#callSummary').innerHTML = `<div class="agent-note fade-in" style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-soft-ink);font-size:13px"><b>Call summary, saved to the call log:</b> Available, 1 parking space, chiller free, <b>no pets allowed</b>, so it fails a must-have. Agent's contact kept for future pet-friendly units.</div>`;
-    log('📝', 'Call logged: Al Zeina <b>doesn\'t allow pets</b>. Ruled out', 2);
+    log('📝', 'Call logged: Al Seef Tower <b>doesn\'t allow pets</b>. Ruled out', 2);
     await wait(1600);
   }},
 
@@ -472,7 +472,7 @@ const scenes = [
       <div class="chat-wrap">
         <div class="chat">
           <div class="chat-top"><div class="av" style="background:var(--portal-b);width:32px;height:32px;font-size:14px">K</div>
-            <div style="flex:1"><b style="font-size:13.5px">Al Bandar 2BR · Khalid (owner)</b><div class="faint" style="font-size:11.5px">Agent (AI) · owner · ${tenant.name} can read along</div></div>
+            <div style="flex:1"><b style="font-size:13.5px">Lake Terrace 2BR · Khalid (owner)</b><div class="faint" style="font-size:11.5px">Agent (AI) · owner · ${tenant.name} can read along</div></div>
             <span class="badge" id="verified" style="display:none">✓ Verified owner</span></div>
           <div class="chat-body" id="cb"></div>
         </div>
@@ -491,14 +491,14 @@ const scenes = [
     const add = (cls, name, html) => { const d=document.createElement('div'); d.className='msg '+cls; d.innerHTML = name ? `<div class="n">${name}</div>${html}` : html; cb.appendChild(d); cb.scrollTop = cb.scrollHeight; return d; };
     const typing = async (who, ms=1100) => { const t = add('system typing', '', `${who} is typing…`); await wait(ms); t.remove(); };
     add('system','', 'Agent sent Khalid a LeaseMatch invite link through Dubizzle chat');
-    log('🔗', 'Invited the Al Bandar owner to a <b>LeaseMatch chat</b>', 10);
+    log('🔗', 'Invited the Lake Terrace owner to a <b>LeaseMatch chat</b>', 10);
     await wait(1200);
     add('system','', 'Khalid joined · uploaded title deed · ownership verified ✓');
     $('#verified').style.display = '';
     log('🛡️', 'Owner identity & <b>title deed verified</b> on LeaseMatch', 25);
     await wait(900);
     const script = [
-      ['agent','Agent (AI)', "Thanks for joining, Khalid. As a reminder, I'm an AI assistant for Sara. She has documents ready and wants a 12-month lease from 1 November. Your ad lists 118k. Would you consider 112k on 4 cheques? Similar 2-beds in Al Bandar are listed at 108–116k."],
+      ['agent','Agent (AI)', "Thanks for joining, Khalid. As a reminder, I'm an AI assistant for Sara. She has documents ready and wants a 12-month lease from 1 November. Your ad lists 118k. Would you consider 112k on 4 cheques? Similar 2-beds in Lake Terrace are listed at 108–116k."],
       ['owner','Khalid (owner)', "112k is low. It's freshly painted and comes with two parking spaces. 116k on 4 cheques, or 112k if she pays in 2 cheques."],
     ];
     for(const [cls,n,t] of script){ await typing(cls==='agent'?'Agent':'Khalid'); add(cls,n,t); await wait(900); }
@@ -535,7 +535,7 @@ const scenes = [
         <div class="kpi fade-in"><div class="l">Tenant time spent</div><div class="v">~4m</div></div>
       </div>
       <div class="card fade-in" style="padding:16px 18px;box-shadow:none">
-        <h3 style="font-size:17px;margin-bottom:8px">Al Bandar 2BR, Al Raha Beach: viewing Wednesday 18:30</h3>
+        <h3 style="font-size:17px;margin-bottom:8px">Lake Terrace 2BR, JLT: viewing Wednesday 18:30</h3>
         <ul class="steps muted" style="margin:0;padding-left:18px">
           <li><b style="color:var(--ink)">AED 114,000/yr on 4 cheques</b>, AED 4,000 below asking and AED 26,000 under budget.</li>
           <li>Owner verified through title deed upload. Cat clause agreed in writing in the LeaseMatch thread.</li>
@@ -555,12 +555,12 @@ const scenes = [
 
 /* summaries used to backfill the log when jumping ahead */
 const skipLog = [
-  ['🧠','Brief: <b>2BR · Reem/Raha · ≤140k · pets</b>', 5],
+  ['🧠','Brief: <b>2BR · Marina/JLT · ≤140k · pets</b>', 5],
   ['📥','Found 6 ads on Bayut & Dubizzle (links verified)', 8],
   ['✅','Sara approved outreach to 3 ads', 12],
   ['✉️','Contacted 3 advertisers (form, chat, email)', 10],
-  ['🟢','Al Bandar owner replied: available, pets OK', 120],
-  ['📞','Al Zeina call: no pets. Ruled out', 10],
+  ['🟢','Lake Terrace owner replied: available, pets OK', 120],
+  ['📞','Al Seef Tower call: no pets. Ruled out', 10],
   ['📅','Viewing booked, 114k agreed in principle', 70],
 ];
 
