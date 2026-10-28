@@ -1,4 +1,4 @@
-# LeaseMatch UAE — Prototype Guide
+# LeaseMatch UAE — Functional MVP Guide
 
 LeaseMatch UAE is an AI rental agent for tenants relocating to Abu Dhabi and
 Dubai, and for the landlords, leasing offices, property management companies
@@ -6,7 +6,7 @@ and agencies on the other side of the deal. Tenants search verified listings
 and Bayut/Dubizzle ads; the app then handles applications, a guided lease,
 signing and payment.
 
-**Live prototype:** https://leasematch-uae.onrender.com ·
+**Live MVP:** https://leasematch-uae.onrender.com ·
 **Code:** https://github.com/yivanyukpl-sudo/leasematch-uae
 
 **Stage:** Functional MVP. The AI is real; payments and agent
@@ -68,13 +68,13 @@ with **? Guide** at the bottom right.
 4. **Beyond LeaseMatch:** market search on Bayut/Dubizzle, email to
    advertisers, simulated agent calls.
 
-| Real when keys are set | Always simulated in this prototype |
+| Real when keys are set | Always simulated in this MVP |
 | --- | --- |
 | Claude agent, web search and photo analysis; Stripe/NOWPayments checkout; Mailgun email | Agent phone calls; UAE Pass and DLD/Ejari registration; package payment when no Stripe key |
 
 ## Functional limitations
 
-| Area | Limitation in this prototype |
+| Area | Limitation in this MVP |
 | --- | --- |
 | AI features | Need `ANTHROPIC_API_KEY` (or OpenAI). Without a key: the chat shows "not connected", photo results are a labelled demo, the deal helper uses built-in answers. The AI can be wrong and only sees what is in a photo. |
 | Bayut / Dubizzle search | Search-index results only, no direct portal access (bot protection, terms of use). Mostly category pages, few single ads; ads can be stale; about 1 minute per search. Every link is verified, so results can be short. |

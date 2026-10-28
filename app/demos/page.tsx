@@ -112,7 +112,7 @@ export default function DemosPage() {
             className="mt-3 inline-block rounded-md border px-3 py-2 text-sm font-medium"
             style={{ borderColor: "var(--border)", color: "var(--accent)" }}
           >
-            Read the prototype guide: logins, a 3-minute tour, limitations ↗
+            Read the MVP guide: logins, a 3-minute tour, limitations ↗
           </a>
         <p className="mt-1 mb-8 max-w-2xl text-sm text-text-muted">
           The HTML prototypes the app was built from, and simulations of agent features that
