@@ -63,7 +63,11 @@ Every user sees their full lease history here.
 | Finished leases | Past leases whose term has ended | The day after the lease end date |
 
 The sample tenant already has two finished leases (Business Bay 2023–24 and
-Al Barsha 2024–25), so the history shows from the first login.
+Al Barsha 2024–25), so the history shows from the first login. They are
+sample records: all their steps show as done, but no payment-proof files are
+attached ("no file on record"). The sample accounts have no active lease, so
+to see proofs, automatic conclusion and the key handover, run a new deal (see
+below).
 
 Click any lease to open it. Once both sides have signed, the lease page shows
 the **Signed agreement**: the full contract text, both signatures with date
@@ -90,6 +94,23 @@ your role, and you can click any other stage to read it.
 
 No receipt to hand? **Attach a sample (demo)** creates a labelled sample PDF
 so you can try steps 6–8. Each action also posts a line in the lease chat.
+
+**Try the whole flow live (about 5 minutes):**
+
+1. Log in as the tenant (`demo.tenant@…`) and **Apply** to a listing from
+   Marina Property Management, e.g. *2BR Sea View, Marina Gate*.
+2. In a private window, log in as `marina.pm@…`, open the listing's
+   **Applicants** page and **Approve**. A lease opens for both.
+3. Landlord: save the **Contract terms**. Tenant: choose a **package**
+   (simulated payment).
+4. Both: **sign** with your full name as on the account (Sara Demo /
+   Rania Haddad).
+5. Tenant: **Attach a sample (demo)** on *Proof of payment*. Landlord: **Attach
+   a sample (demo)** on *Proof of receipt*. The lease is now **concluded
+   automatically**.
+6. Tenant: **Choose how to receive the keys** (in hand or by mail). Landlord:
+   **Confirm this handover**. Tenant: **I received the keys**.
+7. **Leases** for both accounts: the lease is under **Active leases**.
 
 ## A 3-minute tour
 

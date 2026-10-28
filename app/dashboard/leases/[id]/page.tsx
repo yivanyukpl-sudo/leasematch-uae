@@ -166,9 +166,19 @@ export default async function LeasePage({
       case "sign":
         return `Tenant ${lease!.tenant_signed_at ? "✓" : "pending"} · Landlord ${lease!.landlord_signed_at ? "✓" : "pending"}`;
       case "pay":
-        return tenantProof ? `Attached ${tenantProof.created_at.slice(0, 10)}` : paidByCard ? "Paid by card (Stripe receipt)" : `First payment AED ${firstPayment.toLocaleString("en-US")}`;
+        return tenantProof
+          ? `Attached ${tenantProof.created_at.slice(0, 10)}`
+          : paidByCard
+            ? "Paid by card (Stripe receipt)"
+            : lease!.stage === "finalized"
+              ? `Paid ${lease!.payment_marked_at?.slice(0, 10) ?? ""} · no file on record`
+              : `First payment AED ${firstPayment.toLocaleString("en-US")}`;
       case "receipt":
-        return landlordProof ? `Attached ${landlordProof.created_at.slice(0, 10)}` : "Bank statement line or receipt";
+        return landlordProof
+          ? `Attached ${landlordProof.created_at.slice(0, 10)}`
+          : lease!.stage === "finalized"
+            ? `Confirmed ${lease!.confirmed_at?.slice(0, 10) ?? ""} · no file on record`
+            : "Bank statement line or receipt";
       case "concluded":
         return lease!.confirmed_at ? `Concluded automatically ${lease!.confirmed_at.slice(0, 16)} UTC` : "Happens automatically after both confirmations";
       case "keys":
@@ -254,6 +264,9 @@ export default async function LeasePage({
           </div>
         );
       case "pay":
+        if (!tenantProof && !paidByCard && lease!.stage === "finalized") {
+          return <p className="text-sm text-text-muted">Payment recorded {lease!.payment_marked_at?.slice(0, 10)} (ref {lease!.payment_reference ?? "—"}). No file is on record for this older sample lease.</p>;
+        }
         if (tenantProof || paidByCard) {
           return tenantProof ? <ProofCard proof={tenantProof} label="Proof of payment" /> : <p className="text-sm">Paid by card through Stripe · ref {lease!.payment_reference}</p>;
         }
@@ -297,6 +310,9 @@ export default async function LeasePage({
         );
       case "receipt":
         if (landlordProof) return <ProofCard proof={landlordProof} label="Proof of receipt" />;
+        if (lease!.stage === "finalized") {
+          return <p className="text-sm text-text-muted">Receipt confirmed {lease!.confirmed_at?.slice(0, 10)}. No file is on record for this older sample lease.</p>;
+        }
         if (!dealState.tenantProof) return <Locked text="Opens once the tenant attaches the proof of payment." />;
         if (isTenant) return <p className="text-sm text-text-muted">Waiting for {ownerName} to confirm the money arrived and attach the proof of receipt.</p>;
         return (
