@@ -23,7 +23,9 @@ export async function saveUpload(
   if (file.size > MAX_UPLOAD_BYTES) throw new UploadError("The file is larger than 10 MB");
   const buf = Buffer.from(await file.arrayBuffer());
   const type = sniffType(buf);
-  if (!type || type.mime === "application/pdf") throw new UploadError("Only JPG, PNG or WebP photos are allowed");
+  // Payment confirmations may be PDFs (bank receipts); everything else is a photo.
+  if (!type) throw new UploadError(input.kind === "payment_proof" ? "Only PDF, JPG, PNG or WebP files are allowed" : "Only JPG, PNG or WebP photos are allowed");
+  if (type.mime === "application/pdf" && input.kind !== "payment_proof") throw new UploadError("Only JPG, PNG or WebP photos are allowed");
 
   const id = newId();
   const fileName = `${id}.${type.ext}`;

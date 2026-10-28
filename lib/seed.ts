@@ -242,7 +242,7 @@ export const demoTenant = {
 export function seedSampleData(db: DatabaseSync) {
   if (process.env.LEASEMATCH_DISABLE_SEED === "1") return;
 
-  const SEED_VERSION = "3-dubai-first";
+  const SEED_VERSION = "4-lease-history";
   db.exec(`CREATE TABLE IF NOT EXISTS seed_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
   const current = db.prepare(`SELECT value FROM seed_meta WHERE key = 'version'`).get() as
     | { value: string }
@@ -302,6 +302,35 @@ export function seedSampleData(db: DatabaseSync) {
       JSON.stringify(p.amenities),
       JSON.stringify([`/properties/${p.photo}-a.svg`, `/properties/${p.photo}-b.svg`]),
       `-${p.daysListed} days`
+    );
+  }
+
+  // Lease history: two finished tenancies for the demo tenant, so the
+  // Leases page shows past agreements for her and both landlords.
+  const pastLeases = [
+    { id: "seed-lease-past-1", propertyId: "seed-prop-02", providerId: "seed-provider-marina", landlord: "Rania Haddad", start: "2023-11-01", end: "2024-10-31", ref: "LM-HIST-2311" },
+    { id: "seed-lease-past-2", propertyId: "seed-prop-05", providerId: "seed-provider-meadows", landlord: sampleProviders.find((p) => p.id === "seed-provider-meadows")!.fullName, start: "2024-11-01", end: "2025-10-31", ref: "LM-HIST-2411" },
+  ];
+  for (const l of pastLeases) {
+    db.prepare(
+      `INSERT OR IGNORE INTO applications (id, property_id, tenant_id, status, occupation, created_at)
+       VALUES (?, ?, ?, 'approved', 'Software engineer', ?)`
+    ).run(`${l.id}-app`, l.propertyId, demoTenant.id, `${l.start} 09:00:00`);
+    db.prepare(
+      `INSERT OR IGNORE INTO leases (id, application_id, property_id, tenant_id, provider_id, stage,
+         tenant_signed_at, landlord_signed_at, tenant_signature_name, landlord_signature_name,
+         tenant_signature_method, landlord_signature_method, payment_marked_at, payment_provider,
+         payment_reference, confirmed_at, package, package_paid_at, terms, handover_method,
+         handover_date, handover_time, handover_place, handover_set_at, handover_confirmed_at,
+         keys_received_at, created_at)
+       VALUES (?, ?, ?, ?, ?, 'finalized', ?, ?, ?, ?, 'in_app', 'in_app', ?, 'bank_transfer', ?, ?, 'combo', ?, ?,
+         'in_person', ?, '10:00', 'At the apartment', ?, ?, ?, ?)`
+    ).run(
+      l.id, `${l.id}-app`, l.propertyId, demoTenant.id, l.providerId,
+      `${l.start} 08:00:00`, `${l.start} 08:30:00`, demoTenant.fullName, l.landlord,
+      `${l.start} 09:00:00`, l.ref, `${l.start} 10:00:00`, `${l.start} 07:00:00`,
+      JSON.stringify({ startDate: l.start, months: 12, deposit: 5000, cheques: 4, utilities: "tenant", notes: null }),
+      l.start, `${l.start} 11:00:00`, `${l.start} 12:00:00`, `${l.start} 13:00:00`, `${l.start} 06:00:00`
     );
   }
 

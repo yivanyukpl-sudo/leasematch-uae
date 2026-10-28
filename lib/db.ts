@@ -35,7 +35,7 @@ declare global {
 // Bump when the schema below changes. In dev the connection survives
 // hot-reloads (see bottom of this block), so this is what makes a running
 // `next dev` pick up new tables/columns and the sample seed without a restart.
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function open(): DatabaseSync {
   fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -231,13 +231,29 @@ function ensureSchema(db: DatabaseSync) {
   addColumnIfMissing(db, "leases", "package", "TEXT");
   addColumnIfMissing(db, "leases", "package_paid_at", "TEXT");
   addColumnIfMissing(db, "leases", "terms", "TEXT");
+  for (const col of [
+    "handover_method",
+    "handover_date",
+    "handover_time",
+    "handover_place",
+    "handover_address",
+    "handover_recipient",
+    "handover_phone",
+    "handover_notes",
+    "handover_set_at",
+    "handover_confirmed_at",
+    "keys_received_at",
+  ]) {
+    addColumnIfMissing(db, "leases", col, "TEXT");
+  }
+  migrateUploadKinds(db);
   db.exec(`
     -- Private files on disk (UPLOAD_DIR): inspection photos.
     CREATE TABLE IF NOT EXISTS uploads (
       id TEXT PRIMARY KEY,
       owner_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
       property_id TEXT REFERENCES properties(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL CHECK (kind IN ('photo','inspection')),
+      kind TEXT NOT NULL CHECK (kind IN ('photo','inspection','payment_proof')),
       file_name TEXT NOT NULL,
       original_name TEXT,
       mime TEXT NOT NULL,
@@ -268,6 +284,20 @@ function ensureSchema(db: DatabaseSync) {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       finished_at TEXT
     );
+    -- Payment confirmations attached by both sides: the tenant's proof of
+    -- payment and the landlord's proof of receipt. When both exist the
+    -- platform concludes the lease automatically.
+    CREATE TABLE IF NOT EXISTS payment_proofs (
+      id TEXT PRIMARY KEY,
+      lease_id TEXT NOT NULL REFERENCES leases(id) ON DELETE CASCADE,
+      side TEXT NOT NULL CHECK (side IN ('tenant','landlord')),
+      upload_id TEXT REFERENCES uploads(id) ON DELETE SET NULL,
+      amount REAL,
+      reference TEXT,
+      note TEXT,
+      created_by TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
     CREATE TABLE IF NOT EXISTS inspection_photos (
       id TEXT PRIMARY KEY,
       inspection_id TEXT NOT NULL REFERENCES inspections(id) ON DELETE CASCADE,
@@ -279,6 +309,41 @@ function ensureSchema(db: DatabaseSync) {
   `);
 
   seedSampleData(db);
+}
+
+// Schema 4 created uploads with CHECK (photo, inspection); SQLite can't
+// alter a CHECK, so rebuild the table once to allow payment proofs.
+function migrateUploadKinds(db: DatabaseSync) {
+  const row = db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'uploads'`).get() as
+    | { sql: string }
+    | undefined;
+  if (!row || row.sql.includes("'payment_proof'")) return;
+  db.exec("PRAGMA foreign_keys = OFF;");
+  try {
+    db.exec(`
+      BEGIN;
+      CREATE TABLE uploads_v5 (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+        property_id TEXT REFERENCES properties(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('photo','inspection','payment_proof')),
+        file_name TEXT NOT NULL,
+        original_name TEXT,
+        mime TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO uploads_v5 SELECT id, owner_id, property_id, kind, file_name, original_name, mime, size, created_at FROM uploads;
+      DROP TABLE uploads;
+      ALTER TABLE uploads_v5 RENAME TO uploads;
+      COMMIT;
+    `);
+  } catch (e) {
+    db.exec("ROLLBACK;");
+    throw e;
+  } finally {
+    db.exec("PRAGMA foreign_keys = ON;");
+  }
 }
 
 function addColumnIfMissing(db: DatabaseSync, table: string, column: string, ddl: string) {
@@ -695,6 +760,17 @@ export type Lease = {
   package: string | null;
   package_paid_at: string | null;
   terms: string | null;
+  handover_method: "in_person" | "mail" | null;
+  handover_date: string | null;
+  handover_time: string | null;
+  handover_place: string | null;
+  handover_address: string | null;
+  handover_recipient: string | null;
+  handover_phone: string | null;
+  handover_notes: string | null;
+  handover_set_at: string | null;
+  handover_confirmed_at: string | null;
+  keys_received_at: string | null;
   created_at: string;
 };
 
@@ -1111,7 +1187,7 @@ export type Upload = {
   id: string;
   owner_id: string;
   property_id: string | null;
-  kind: "photo" | "inspection";
+  kind: "photo" | "inspection" | "payment_proof";
   file_name: string;
   original_name: string | null;
   mime: string;
@@ -1268,4 +1344,84 @@ export function inspectionIdsForUpload(uploadId: string): string[] {
   return (db.prepare(`SELECT inspection_id FROM inspection_photos WHERE upload_id = ?`).all(uploadId) as { inspection_id: string }[]).map(
     (r) => r.inspection_id
   );
+}
+
+// ---- Payment confirmations (both sides) ----
+
+export type PaymentProof = {
+  id: string;
+  lease_id: string;
+  side: "tenant" | "landlord";
+  upload_id: string | null;
+  amount: number | null;
+  reference: string | null;
+  note: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+export function listPaymentProofs(leaseId: string): PaymentProof[] {
+  return db.prepare(`SELECT * FROM payment_proofs WHERE lease_id = ? ORDER BY created_at`).all(leaseId) as PaymentProof[];
+}
+
+export function paymentProofIdsForUpload(uploadId: string): string[] {
+  return (db.prepare(`SELECT lease_id FROM payment_proofs WHERE upload_id = ?`).all(uploadId) as { lease_id: string }[]).map((r) => r.lease_id);
+}
+
+// Records one side's confirmation and moves the lease on: the tenant's proof
+// marks the payment as sent; once the landlord's proof of receipt is also
+// there, the platform concludes the agreement automatically.
+export function addPaymentProof(i: {
+  leaseId: string;
+  side: PaymentProof["side"];
+  uploadId: string | null;
+  amount: number | null;
+  reference: string | null;
+  note: string | null;
+  createdBy: string;
+}): Lease {
+  db.prepare(
+    `INSERT INTO payment_proofs (id, lease_id, side, upload_id, amount, reference, note, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(newId(), i.leaseId, i.side, i.uploadId, i.amount, i.reference, i.note, i.createdBy);
+  let lease = getLeaseById(i.leaseId)!;
+  const proofs = listPaymentProofs(i.leaseId);
+  const tenantDone = proofs.some((p) => p.side === "tenant") || (lease.payment_provider === "stripe" && Boolean(lease.payment_reference));
+  if (i.side === "tenant" && lease.stage === "awaiting_payment") {
+    lease = submitPayment(i.leaseId, { provider: "bank_transfer", reference: i.reference ?? undefined });
+  }
+  if (tenantDone && proofs.some((p) => p.side === "landlord") && lease.stage !== "finalized") {
+    if (lease.stage === "awaiting_payment") submitPayment(i.leaseId, { provider: "bank_transfer", reference: i.reference ?? undefined });
+    lease = confirmPayment(i.leaseId);
+  }
+  return lease;
+}
+
+// ---- Key handover ----
+
+export function setHandover(
+  leaseId: string,
+  h: {
+    method: "in_person" | "mail";
+    date: string | null;
+    time: string | null;
+    place: string | null;
+    address: string | null;
+    recipient: string | null;
+    phone: string | null;
+    notes: string | null;
+  }
+) {
+  db.prepare(
+    `UPDATE leases SET handover_method = ?, handover_date = ?, handover_time = ?, handover_place = ?, handover_address = ?,
+       handover_recipient = ?, handover_phone = ?, handover_notes = ?, handover_set_at = datetime('now'), handover_confirmed_at = NULL
+     WHERE id = ? AND keys_received_at IS NULL`
+  ).run(h.method, h.date, h.time, h.place, h.address, h.recipient, h.phone, h.notes, leaseId);
+}
+
+export function confirmHandover(leaseId: string) {
+  db.prepare(`UPDATE leases SET handover_confirmed_at = datetime('now') WHERE id = ? AND handover_method IS NOT NULL`).run(leaseId);
+}
+
+export function markKeysReceived(leaseId: string) {
+  db.prepare(`UPDATE leases SET keys_received_at = datetime('now') WHERE id = ? AND handover_confirmed_at IS NOT NULL`).run(leaseId);
 }

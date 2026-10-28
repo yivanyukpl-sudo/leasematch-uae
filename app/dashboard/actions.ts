@@ -13,7 +13,6 @@ import {
 import {
   addExternalInquiryMessage,
   addLeaseMessage,
-  confirmPayment,
   createApplication,
   createLeaseFromApplication,
   getApplicationById,
@@ -32,8 +31,6 @@ import {
 import {
   createCryptoInvoice,
   createLeaseCheckoutSession,
-  isCryptoPaymentConfigured,
-  isPaymentProviderConfigured,
 } from "@/lib/payments";
 import { draftNegotiationMessage } from "@/lib/ai";
 import { comparablesFor } from "@/lib/comparables";
@@ -43,7 +40,8 @@ import { externalInquiryReplySchema } from "@/lib/schemas";
 import { getPackage } from "@/lib/packages";
 import { leaseTermsSchema } from "@/lib/schemas";
 import { answerDealQuestion } from "@/lib/deal-assistant";
-import { markPackagePaid, saveLeaseTerms, setLeasePackage } from "@/lib/db";
+import { confirmHandover, markKeysReceived, markPackagePaid, saveLeaseTerms, setHandover, setLeasePackage } from "@/lib/db";
+import { handoverSchema } from "@/lib/schemas";
 import { getStripe } from "@/lib/payments";
 import { rateLimit } from "@/lib/rate-limit";
 import { notifyTenantsAboutListing } from "@/lib/alerts";
@@ -316,24 +314,66 @@ export async function confirmCryptoSentAction(formData: FormData) {
   revalidatePath(`/dashboard/leases/${leaseId}`);
 }
 
-// Fallback used only when no payment provider is configured, so the rest of
-// the flow (confirmation, finalization, key handover) can still be tested.
-export async function simulatePaymentAction(formData: FormData) {
+// ---- Key handover (after the agreement is concluded) ----
+
+export async function saveHandoverAction(formData: FormData) {
   const session = await requireSession();
-  if (isPaymentProviderConfigured() || isCryptoPaymentConfigured()) return;
   const leaseId = String(formData.get("leaseId") || "");
   const lease = assertLeaseParty(leaseId, session.sub);
-  if (!lease || lease.tenant_id !== session.sub) return;
-  submitPayment(leaseId, { provider: "simulated" });
+  if (!lease || lease.tenant_id !== session.sub || lease.stage !== "finalized" || lease.keys_received_at) return;
+  const opt = (k: string) => String(formData.get(k) || "").trim() || null;
+  const method = formData.get("method");
+  const parsed = handoverSchema.safeParse(
+    method === "mail"
+      ? { method, address: opt("address") ?? "", recipient: opt("recipient") ?? "", phone: opt("phone"), notes: opt("notes") }
+      : { method, date: opt("date") ?? "", time: opt("time") ?? "", place: opt("place") ?? "", notes: opt("notes") }
+  );
+  if (!parsed.success) {
+    redirect(`/dashboard/leases/${leaseId}?handoverError=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Check the details")}#deal-steps`);
+  }
+  const h = parsed.data;
+  setHandover(leaseId, {
+    method: h.method,
+    date: h.method === "in_person" ? h.date : null,
+    time: h.method === "in_person" ? h.time : null,
+    place: h.method === "in_person" ? h.place : null,
+    address: h.method === "mail" ? h.address : null,
+    recipient: h.method === "mail" ? h.recipient : null,
+    phone: h.method === "mail" ? h.phone : null,
+    notes: h.notes,
+  });
+  addLeaseMessage({
+    leaseId,
+    senderId: session.sub,
+    body:
+      h.method === "in_person"
+        ? `Key handover: I'd like to receive the keys in hand on ${h.date} at ${h.time}, at ${h.place}.`
+        : `Key handover: please send the keys by mail to ${h.address} (recipient: ${h.recipient}).`,
+  });
   revalidatePath(`/dashboard/leases/${leaseId}`);
 }
 
-export async function confirmPaymentAction(formData: FormData) {
+export async function confirmHandoverAction(formData: FormData) {
   const session = await requireSession();
   const leaseId = String(formData.get("leaseId") || "");
   const lease = assertLeaseParty(leaseId, session.sub);
-  if (!lease || lease.provider_id !== session.sub) return;
-  confirmPayment(leaseId);
+  if (!lease || lease.provider_id !== session.sub || !lease.handover_method || lease.handover_confirmed_at) return;
+  confirmHandover(leaseId);
+  addLeaseMessage({
+    leaseId,
+    senderId: session.sub,
+    body: lease.handover_method === "mail" ? "Confirmed: I'll send the keys by mail to the address given." : `Confirmed: see you on ${lease.handover_date} at ${lease.handover_time}, ${lease.handover_place}.`,
+  });
+  revalidatePath(`/dashboard/leases/${leaseId}`);
+}
+
+export async function keysReceivedAction(formData: FormData) {
+  const session = await requireSession();
+  const leaseId = String(formData.get("leaseId") || "");
+  const lease = assertLeaseParty(leaseId, session.sub);
+  if (!lease || lease.tenant_id !== session.sub || !lease.handover_confirmed_at || lease.keys_received_at) return;
+  markKeysReceived(leaseId);
+  addLeaseMessage({ leaseId, senderId: session.sub, body: "I received the keys. Thank you!" });
   revalidatePath(`/dashboard/leases/${leaseId}`);
 }
 

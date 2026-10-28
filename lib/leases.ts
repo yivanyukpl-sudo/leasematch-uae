@@ -8,10 +8,10 @@ export const leaseStageOrder: LeaseStage[] = [
 ];
 
 export const leaseStageLabels: Record<LeaseStage, string> = {
-  awaiting_signature: "Awaiting signatures",
-  awaiting_payment: "Awaiting payment",
-  awaiting_confirmation: "Awaiting payment confirmation",
-  finalized: "Finalized — lease active",
+  awaiting_signature: "Terms & signatures",
+  awaiting_payment: "Proof of payment",
+  awaiting_confirmation: "Proof of receipt",
+  finalized: "Concluded — in force",
 };
 
 export function leaseStageIndex(stage: LeaseStage): number {

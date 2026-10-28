@@ -15,10 +15,10 @@ const day = (v: string | null) => (v ? v.slice(0, 10) : "—");
 // Copy per account category; providers (landlord, agency, leasing office)
 // also get a per-property view and upcoming renewals.
 const COPY = {
-  tenant: { eyebrow: "My tenancies", title: "Lease agreements", other: "Landlord", empty: "No concluded leases yet. When both sides sign and the payment is confirmed, your lease appears here." },
-  owner: { eyebrow: "My properties", title: "Lease agreements", other: "Tenant", empty: "No concluded leases yet. Approve an applicant; once both sides sign and the payment is confirmed, the lease appears here." },
-  broker: { eyebrow: "Deals you brokered", title: "Lease agreements", other: "Tenant", empty: "No concluded deals yet. Leases on the listings you manage appear here once signed and paid (commission is paid by the landlord)." },
-  pm: { eyebrow: "Portfolio", title: "Lease agreements across your units", other: "Tenant", empty: "No concluded leases yet. Leases on your units appear here once signed and paid." },
+  tenant: { eyebrow: "My tenancies", title: "Lease agreements", other: "Landlord", empty: "No active lease. When both sides sign and both payment confirmations are attached, your lease appears here." },
+  owner: { eyebrow: "My properties", title: "Lease agreements", other: "Tenant", empty: "No active leases. Approve an applicant; once both sides sign and both payment confirmations are attached, the lease appears here." },
+  broker: { eyebrow: "Deals you brokered", title: "Lease agreements", other: "Tenant", empty: "No active deals. Leases on the listings you manage appear here once signed and paid (commission is paid by the landlord)." },
+  pm: { eyebrow: "Portfolio", title: "Lease agreements across your units", other: "Tenant", empty: "No active leases. Leases on your units appear here once signed and paid." },
 } as const;
 
 function daysUntil(date: string): number {
@@ -31,10 +31,16 @@ export default async function LeasesPage() {
   const isTenant = session.role === "tenant";
   const copy = COPY[session.role];
   const leases = listLeasesForUser(session.sub, session.role);
-  const concluded = leases.filter((l) => l.stage === "finalized");
+  const endOf = (l: Lease) => (l.terms ? leaseEndDate(JSON.parse(l.terms) as LeaseTerms) : null);
+  // Concluded leases are active until their end date passes, then move to history.
+  const isFinished = (l: Lease) => {
+    const end = endOf(l);
+    return l.stage === "finalized" && end !== null && daysUntil(end) < 0;
+  };
+  const concluded = leases.filter((l) => l.stage === "finalized" && !isFinished(l));
+  const finished = leases.filter(isFinished).sort((a, b) => (endOf(b) ?? "").localeCompare(endOf(a) ?? ""));
   const inProgress = leases.filter((l) => l.stage !== "finalized");
   const annualRent = concluded.reduce((sum, l) => sum + (getPropertyById(l.property_id)?.price ?? 0), 0);
-  const endOf = (l: Lease) => (l.terms ? leaseEndDate(JSON.parse(l.terms) as LeaseTerms) : null);
   const renewalsDue = concluded.filter((l) => {
     const end = endOf(l);
     return end !== null && daysUntil(end) <= 90;
@@ -50,13 +56,14 @@ export default async function LeasesPage() {
         </p>
         <h1 className="font-display text-2xl font-semibold">{copy.title}</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Concluded agreements are signed by both sides and paid. Open one to see the full signed contract, payment and key handover.
+          Your full history: active leases, deals in progress and finished leases. Open any of them to see the signed contract, both payment confirmations and the key handover.
         </p>
 
         <GuideTour id={isTenant ? "leases-tenant" : "leases-provider"} steps={TOURS[isTenant ? "leases-tenant" : "leases-provider"]} />
-        <div className="mt-6 grid gap-3 sm:grid-cols-3" data-tour="leases-summary">
-          <Stat label="In force" value={String(concluded.length)} note="signed and paid" />
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="leases-summary">
+          <Stat label="Active" value={String(concluded.length)} note="concluded, in force" />
           <Stat label="In progress" value={String(inProgress.length)} note="terms, signing or payment" />
+          <Stat label="Finished" value={String(finished.length)} note="past leases, term ended" />
           {isTenant ? (
             <Stat label="Annual rent (in force)" value={concluded.length ? aed(annualRent) : "—"} note="sum of active leases" />
           ) : (
@@ -107,12 +114,16 @@ export default async function LeasesPage() {
           </section>
         )}
 
-        <Section title="Concluded agreements" empty={copy.empty} tour="leases-concluded">
+        <Section title="Active leases" empty={copy.empty} tour="leases-concluded">
           {concluded.map((l) => <LeaseRow key={l.id} lease={l} isTenant={isTenant} otherLabel={copy.other} />)}
         </Section>
 
         <Section title="In progress" empty="Nothing in progress." tour="leases-in-progress">
           {inProgress.map((l) => <LeaseRow key={l.id} lease={l} isTenant={isTenant} otherLabel={copy.other} />)}
+        </Section>
+
+        <Section title="Finished leases" empty="No finished leases yet. A lease moves here the day after its term ends." tour="leases-finished">
+          {finished.map((l) => <LeaseRow key={l.id} lease={l} isTenant={isTenant} otherLabel={copy.other} finished />)}
         </Section>
       </main>
     </div>
@@ -142,7 +153,7 @@ function Section({ title, empty, tour, children }: { title: string; empty: strin
   );
 }
 
-function LeaseRow({ lease, isTenant, otherLabel }: { lease: Lease; isTenant: boolean; otherLabel: string }) {
+function LeaseRow({ lease, isTenant, otherLabel, finished = false }: { lease: Lease; isTenant: boolean; otherLabel: string; finished?: boolean }) {
   const property = getPropertyById(lease.property_id);
   const other = getProfileById(isTenant ? lease.provider_id : lease.tenant_id);
   const terms: LeaseTerms | null = lease.terms ? JSON.parse(lease.terms) : null;
@@ -160,15 +171,16 @@ function LeaseRow({ lease, isTenant, otherLabel }: { lease: Lease; isTenant: boo
             {terms ? `${terms.startDate} → ${leaseEndDate(terms)} · ${terms.cheques} cheque${terms.cheques === 1 ? "" : "s"}` : "Terms not agreed yet"}
             {lease.tenant_signed_at && lease.landlord_signed_at ? ` · signed ${day(lease.tenant_signed_at > lease.landlord_signed_at ? lease.tenant_signed_at : lease.landlord_signed_at)}` : ""}
             {lease.payment_reference ? ` · payment ref ${lease.payment_reference}` : ""}
+            {done && !finished ? ` · keys: ${lease.keys_received_at ? "received" : lease.handover_method === "mail" ? "by mail, pending" : lease.handover_method ? `meeting ${lease.handover_date}` : "handover not arranged"}` : ""}
           </p>
         </div>
         <div className="text-right">
           {property && <p className="font-medium" style={{ fontVariantNumeric: "tabular-nums" }}>{aed(property.price)}/yr</p>}
           <span
             className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
-            style={done ? { background: "var(--success-soft)", color: "var(--success)" } : { background: "var(--gold-soft)", color: "var(--gold)" }}
+            style={finished ? { background: "var(--field)", color: "var(--text-muted)" } : done ? { background: "var(--success-soft)", color: "var(--success)" } : { background: "var(--gold-soft)", color: "var(--gold)" }}
           >
-            {done ? `In force · since ${day(lease.confirmed_at)}` : leaseStageLabels[lease.stage]}
+            {finished ? `Finished · ended ${terms ? leaseEndDate(terms) : "—"}` : done ? `Active · until ${terms ? leaseEndDate(terms) : "—"}` : leaseStageLabels[lease.stage]}
           </span>
         </div>
       </Link>

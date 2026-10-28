@@ -116,3 +116,21 @@ export const leaseTermsSchema = z.object({
   utilities: z.enum(["tenant", "included"]),
   notes: z.string().max(600).nullable(),
 });
+
+// The tenant's choice of how to receive the keys once the lease is concluded.
+export const handoverSchema = z.discriminatedUnion("method", [
+  z.object({
+    method: z.literal("in_person"),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
+    time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a time"),
+    place: z.string().trim().min(3, "Say where you'll meet").max(200),
+    notes: z.string().trim().max(300).nullable(),
+  }),
+  z.object({
+    method: z.literal("mail"),
+    address: z.string().trim().min(10, "Enter the full delivery address").max(300),
+    recipient: z.string().trim().min(2, "Who receives the parcel?").max(100),
+    phone: z.string().trim().max(30).nullable(),
+    notes: z.string().trim().max(300).nullable(),
+  }),
+]);

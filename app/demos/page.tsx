@@ -8,15 +8,21 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 const simulations = [
   {
+    href: "/simulations/roles/lease.html",
+    title: "Step-by-step simulation: lease conclusion",
+    body: "The core of the app, from both sides: every stage with tips, the tenant's proof of payment and the landlord's proof of receipt, automatic conclusion by the platform, the key-handover window (in hand at a meeting or by mail) and the lease history.",
+    tag: "Core flow",
+  },
+  {
     href: "/simulations/roles/tenant.html",
     title: "Step-by-step simulation: tenant",
-    body: "Tap the highlighted buttons through the tenant journey: preferences, matches, “notify me”, the AI agent, package, AI photo inspection, signing and keys.",
+    body: "Tap the highlighted buttons through the tenant journey: preferences, matches, “notify me”, the AI agent, package, AI photo inspection, signing, proof of payment, automatic conclusion, choosing how to get the keys, and your lease history.",
     tag: "Tenant",
   },
   {
     href: "/simulations/roles/owner.html",
     title: "Step-by-step simulation: landlord",
-    body: "Listing, AI photo tips, waiting tenants, an application, contract terms, signing and confirming payment.",
+    body: "Listing, AI photo tips, waiting tenants, an application, contract terms, signing, attaching proof of receipt (the lease then concludes automatically), confirming the key handover, and all leases: active, in progress, finished.",
     tag: "Landlord",
   },
   {
@@ -42,12 +48,12 @@ const prototypes = [
   {
     href: "/demos/lease-flow-tenant.html",
     title: "Lease flow, tenant side",
-    body: "Stage-by-stage lease execution as the tenant sees it, with the amendment chat. Open it next to the landlord view when presenting.",
+    body: "Earlier iteration of the lease flow, tenant side, with the amendment chat. The current flow (payment proofs from both sides, automatic conclusion, key handover) is in the lease conclusion simulation above and in the app.",
   },
   {
     href: "/demos/lease-flow-landlord.html",
     title: "Lease flow, landlord side",
-    body: "The same deal from the provider's side: draft, finalize, confirm payment.",
+    body: "Earlier iteration of the same deal from the provider's side. See the lease conclusion simulation for the current flow.",
   },
   {
     href: "/demos/prototype-v2.html",

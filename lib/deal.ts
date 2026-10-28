@@ -21,22 +21,40 @@ export type DealState = {
   inspectionDone: boolean;
   tenantSigned: boolean;
   ownerSigned: boolean;
+  // Payment confirmations attached by each side.
+  tenantProof?: boolean;
+  landlordProof?: boolean;
+  // Key handover: tenant chose a method, landlord confirmed, tenant got keys.
+  handoverChosen?: boolean;
+  handoverConfirmed?: boolean;
+  keysReceived?: boolean;
 };
 
-export type DealStepId = "approved" | "terms" | "package" | "inspection" | "sign" | "pay" | "keys";
-export type DealStep = { id: DealStepId; title: string; done: boolean; optional?: boolean };
+export type DealStepId =
+  | "approved"
+  | "terms"
+  | "package"
+  | "inspection"
+  | "sign"
+  | "pay"
+  | "receipt"
+  | "concluded"
+  | "keys";
+export type DealStep = { id: DealStepId; title: string; done: boolean; optional?: boolean; auto?: boolean };
 
 export function dealSteps(s: DealState): DealStep[] {
   const signed = s.tenantSigned && s.ownerSigned;
-  const paid = s.stage === "awaiting_confirmation" || s.stage === "finalized";
+  const concluded = s.stage === "finalized";
   return [
     { id: "approved", title: "Application approved", done: true },
     { id: "terms", title: "Contract terms", done: Boolean(s.terms) },
     { id: "package", title: "LeaseMatch package", done: s.packagePaid },
     { id: "inspection", title: "AI photo inspection", done: s.inspectionDone, optional: true },
     { id: "sign", title: "Both signatures", done: signed },
-    { id: "pay", title: "First payment", done: paid },
-    { id: "keys", title: "Confirmation & keys", done: s.stage === "finalized" },
+    { id: "pay", title: "Tenant pays and attaches proof of payment", done: Boolean(s.tenantProof) || concluded },
+    { id: "receipt", title: "Landlord attaches proof of receipt", done: Boolean(s.landlordProof) || concluded },
+    { id: "concluded", title: "Agreement concluded", done: concluded, auto: true },
+    { id: "keys", title: "Key handover", done: Boolean(s.keysReceived) },
   ];
 }
 
@@ -44,39 +62,71 @@ export function currentStep(s: DealState): DealStepId {
   return dealSteps(s).find((x) => !x.done && !x.optional)?.id ?? "keys";
 }
 
-export function assistantMessage(step: DealStepId, role: "tenant" | "owner", s: DealState): string {
-  const pkg = getPackage(s.pkg);
+// What is left in the key handover, for the step card and the assistant.
+export function handoverPhase(s: DealState): "choose" | "confirm" | "receive" | "done" {
+  if (s.keysReceived) return "done";
+  if (!s.handoverChosen) return "choose";
+  if (!s.handoverConfirmed) return "confirm";
+  return "receive";
+}
+
+// The tip shown on each step card, written for whoever is looking at it.
+export function stepTip(step: DealStepId, role: "tenant" | "owner", s: DealState): string {
   const t = role === "tenant";
+  const pkg = getPackage(s.pkg);
   switch (step) {
+    case "approved":
+      return t
+        ? "The landlord approved your application and a lease was opened. Everything from here happens on this page."
+        : "You approved this tenant. Everything from here happens on this page.";
     case "terms":
       return t
-        ? "Step 1 of 5. Let's agree the terms: move-in date, length, deposit, number of cheques, utilities. The landlord can propose them; you'll see them here and can discuss in the chat below."
-        : "Step 1 of 5. Fill in the contract terms: move-in date, length, deposit, number of cheques, utilities. The tenant sees them straight away.";
+        ? "Move-in date, length, deposit, number of cheques and utilities. Either side can fill them in; the other sees them straight away. Discuss changes in the chat at the bottom."
+        : "Fill in move-in date, length, deposit, number of cheques and utilities. The tenant sees them straight away and can discuss them in the chat.";
     case "package":
       return t
-        ? "Step 2 of 5. Choose a package. It covers a correct contract and a protected payment. Going direct doesn't save money: a contract and a lawyer cost more anyway, and here we guarantee both the contract and an honest payment."
-        : "Step 2 of 5. The tenant chooses a LeaseMatch package. It's free for you. Once it's paid, you can sign the contract.";
+        ? "Choose a package: a checked contract, a protected payment, or both. Signing unlocks once it's paid."
+        : "The tenant chooses and pays a LeaseMatch package. It's free for you. Signing unlocks once it's paid.";
     case "inspection":
-      return "Recommended: run the AI photo inspection. The assistant walks you room by room and the AI flags damp, cracks or broken appliances before you sign.";
+      return "Optional but recommended: the AI walks you room by room and flags damp, cracks or broken appliances before anyone signs.";
     case "sign":
       return t
-        ? `Step 3 of 5. Review the contract below and sign.${pkg?.includesContract ? " The template is checked — nothing to add by hand." : ""}`
-        : "Step 3 of 5. Review the contract and sign. It takes effect after payment and your confirmation.";
+        ? `Read the contract and sign with your full name as on your account.${pkg?.includesContract ? " The template is checked: nothing to add by hand." : ""} The landlord signs too; order doesn't matter.`
+        : "Read the contract and sign with your full name as on your account. The tenant signs too; order doesn't matter.";
     case "pay":
       return t
-        ? pkg?.includesPayment
-          ? "Step 4 of 5. Pay the first rent through the protected payment. The landlord gets a confirmation and you get a receipt."
-          : "Step 4 of 5. Pay the first rent. Tip: with “Protected payment” the money goes through a protected checkout with a receipt."
-        : "Step 4 of 5. Waiting for the tenant's payment. We'll email you.";
-    case "keys":
-      return s.stage === "finalized"
-        ? "Done! The lease is in force. Hand over keys only in person at the property, with the photo condition report."
-        : t
-          ? "Step 5 of 5. Payment sent. The landlord confirms receipt, then the lease takes effect."
-          : "Step 5 of 5. Confirm you received the payment so the lease takes effect, and arrange the key handover.";
-    default:
-      return "Application approved. Next: the contract terms.";
+        ? "Pay the first cheque (or the agreed first payment) and attach the confirmation: a bank transfer receipt, a photo of the cheque, or a screenshot. PDF, JPG or PNG."
+        : "The tenant pays the first cheque and attaches their proof of payment. You'll see it here and can open it.";
+    case "receipt":
+      return t
+        ? "The landlord checks the money arrived and attaches their proof of receipt (bank statement line or receipt). You'll see it here."
+        : "Check the money arrived, then attach your proof of receipt: a bank statement line, a screenshot or a signed receipt. Once you attach it, the agreement is concluded automatically.";
+    case "concluded":
+      return "Automatic: when both payment confirmations are attached, LeaseMatch concludes the agreement, marks the property as leased and shows the signed contract below. No one has to press a button.";
+    case "keys": {
+      const phase = handoverPhase(s);
+      if (phase === "done") return "Keys received. The tenancy is fully set up. Register the contract with Ejari (Dubai) or Tawtheeq (Abu Dhabi).";
+      if (phase === "choose")
+        return t
+          ? "Choose how you receive the keys: in hand at a meeting with the landlord (pick the date, time and place, e.g. the apartment) or by mail to an address you give."
+          : "The tenant chooses how to receive the keys: in hand at a meeting, or by mail. You'll confirm what they choose.";
+      if (phase === "confirm")
+        return t
+          ? "The landlord confirms your handover choice. You can still change it until then."
+          : "Check the tenant's choice and confirm it, or agree a change in the chat.";
+      return t
+        ? "Once you have the keys, press “I received the keys”. Check the meter readings and the condition report at handover."
+        : "Hand over the keys as agreed. The tenant confirms receipt here.";
+    }
   }
+}
+
+export function assistantMessage(step: DealStepId, role: "tenant" | "owner", s: DealState): string {
+  const steps = dealSteps(s).filter((x) => !x.optional && x.id !== "approved");
+  const n = steps.findIndex((x) => x.id === step) + 1;
+  const prefix = n > 0 ? `Step ${n} of ${steps.length}. ` : "";
+  if (step === "keys" && handoverPhase(s) === "done") return "Done! The lease is in force and the keys are with the tenant.";
+  return prefix + stepTip(step, role, s);
 }
 
 // Plain-language tenancy template. Prototype text: a UAE lawyer must review

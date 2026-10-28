@@ -24,7 +24,7 @@ These are sample accounts on sample data.
 | Tenants | Preferences and match scores · AI agent chat · Bayut/Dubizzle market search with verified links · "Notify me" alerts when nothing fits · apply in one click |
 | Landlords, leasing offices, property managers | Listings · applicants with job, income and move-in date · AI photo inspection of the unit · alerts about waiting tenants |
 | Agencies | Transparent listings, with commission paid by the landlord, never the tenant |
-| Everyone in a deal | A deal assistant that guides each step: contract terms → package → AI photo inspection → signatures → payment → keys |
+| Everyone in a deal | A step-by-step lease page with tips: contract terms → package → AI photo inspection → signatures → tenant's proof of payment → landlord's proof of receipt → automatic conclusion → key handover (in hand or by mail) |
 
 ### The AI (Claude)
 
@@ -44,13 +44,18 @@ built-in answers.
 
 ## Try it (3 minutes)
 
-1. Open the **Demos** page and play a role simulation (tenant, landlord or agent).
+1. Open the **Demos** page and play a simulation: **lease conclusion** (both
+   sides), tenant, landlord or agent.
 2. Log in as the tenant. The dashboard shows matches; ask the **AI agent**
    for a home, or run a **market search** on Bayut and Dubizzle.
 3. Apply to a listing. In a second browser, log in as `marina.pm@…` and
    approve the applicant.
-4. On the lease page, follow the **deal assistant**: terms, package (simulated
-   payment), AI photo inspection, sign on both sides, pay, confirm.
+4. On the lease page, follow **Lease conclusion, step by step**: terms,
+   package, AI photo inspection, both signatures, the tenant attaches proof of
+   payment, the landlord attaches proof of receipt, the platform concludes the
+   agreement automatically, then the tenant chooses how to get the keys.
+   **Attach a sample (demo)** creates a labelled PDF if you have no receipt.
+5. **Leases** in the header: active, in progress and finished leases.
 
 Each main screen opens a short click-through guide on first visit; reopen it
 with **? Guide** at the bottom right.
@@ -75,7 +80,7 @@ The SQLite database and sample data are created on first start in
 | `SESSION_SECRET` | Signs session cookies (required in production) |
 | `STRIPE_SECRET_KEY`, `NOWPAYMENTS_API_KEY` | Real payments; otherwise simulated |
 | `MAILGUN_API_KEY`, `MAILGUN_DOMAIN` | Real emails; otherwise printed to the console in dev |
-| `LEASEMATCH_DB_PATH`, `UPLOAD_DIR` | Database and uploaded photos location |
+| `LEASEMATCH_DB_PATH`, `UPLOAD_DIR` | Database and uploaded files location (photos, payment proofs) |
 
 Checks:
 
