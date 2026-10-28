@@ -29,3 +29,10 @@ test("alerts and inspection summary", () => {
   const s = summarize([{ step: "bathroom", a: { quality: "ok", retakeReason: null, condition: 2, issues: [{ severity: "high", title: "Mould", detail: "" }], summary: "" } }]);
   assert.equal(s.verdict, "warning");
 });
+
+test("lease end date is the day before the anniversary", async () => {
+  const { leaseEndDate } = await import("../lib/deal.ts");
+  assert.equal(leaseEndDate({ startDate: "2026-12-01", months: 12 }), "2027-11-30");
+  assert.equal(leaseEndDate({ startDate: "2027-01-31", months: 1 }), "2027-02-27");
+  assert.equal(leaseEndDate({ startDate: "2027-03-01", months: 1 }), "2027-03-31");
+});

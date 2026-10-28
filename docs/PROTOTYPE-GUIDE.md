@@ -33,7 +33,11 @@ These are sample accounts on sample data.
 4. **New account:** `/signup`, then choose a role — tenant, landlord, broker
    or property manager. Brokers and property managers must give a company
    name.
-5. **Sign out** from the header. A session lasts 30 days.
+5. **Leases** (header): every lease agreement for your account — concluded
+   (signed, paid, in force) and in progress. Landlords, agencies and property
+   managers also see a per-property table with lease end dates and renewals
+   due within 90 days. Open a lease to read the full signed contract.
+6. **Sign out** from the header. A session lasts 30 days.
 
 To test a full deal, use two browsers (or a private window): tenant in one,
 landlord in the other. The tenant applies to a listing, the landlord approves

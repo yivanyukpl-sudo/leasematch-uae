@@ -37,6 +37,9 @@ export async function SiteHeader() {
                   Market search
                 </Link>
               )}
+              <Link href="/dashboard/leases" className="text-text-muted hover:text-text">
+                Leases
+              </Link>
               <Link href="/dashboard" className="text-text-muted hover:text-text">
                 Dashboard
               </Link>

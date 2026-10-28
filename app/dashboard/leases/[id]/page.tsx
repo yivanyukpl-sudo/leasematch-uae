@@ -23,7 +23,7 @@ import { DealAssistant } from "@/components/DealAssistant";
 import { ContractPreview, PackagePicker, TermsCard } from "@/components/DealPanels";
 import { GuideTour } from "@/components/GuideTour";
 import { TOURS } from "@/lib/tours";
-import { assistantMessage, currentStep, dealSteps, type DealState, type LeaseTerms } from "@/lib/deal";
+import { assistantMessage, contractText, currentStep, dealSteps, leaseEndDate, type DealState, type LeaseTerms } from "@/lib/deal";
 import {
   confirmCryptoSentAction,
   confirmPaymentAction,
@@ -390,6 +390,45 @@ export default async function LeasePage({
             </div>
           )}
         </div>
+
+        {lease.tenant_signed_at && lease.landlord_signed_at && terms && property && tenant && provider && (
+          <section className="mt-6 rounded-lg border bg-surface p-6" style={{ borderColor: "var(--border)" }} data-tour="signed-agreement">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold">Signed agreement</h2>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                style={lease.stage === "finalized" ? { background: "var(--success-soft)", color: "var(--success)" } : { background: "var(--gold-soft)", color: "var(--gold)" }}
+              >
+                {lease.stage === "finalized" ? `In force · ${terms.startDate} → ${leaseEndDate(terms)}` : "Signed · awaiting payment"}
+              </span>
+            </div>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">
+              {contractText({ ownerName: provider.company_name ?? provider.full_name, tenantName: tenant.full_name, address: property.location, rent: property.price, terms }).clauses.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ol>
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div className="rounded-md p-3" style={{ background: "var(--field)" }}>
+                <p className="text-xs text-text-muted">Tenant signature</p>
+                <p className="font-medium">{lease.tenant_signature_name}</p>
+                <p className="text-xs text-text-muted">{lease.tenant_signed_at?.slice(0, 16)} UTC · {signatureMethodLabel(lease.tenant_signature_method)}</p>
+              </div>
+              <div className="rounded-md p-3" style={{ background: "var(--field)" }}>
+                <p className="text-xs text-text-muted">Landlord signature</p>
+                <p className="font-medium">{lease.landlord_signature_name}</p>
+                <p className="text-xs text-text-muted">{lease.landlord_signed_at?.slice(0, 16)} UTC · {signatureMethodLabel(lease.landlord_signature_method)}</p>
+              </div>
+            </div>
+            {lease.payment_marked_at && (
+              <p className="mt-3 text-xs text-text-muted">
+                First payment {lease.payment_provider ? `via ${paymentProviderLabel(lease.payment_provider)}` : ""}
+                {lease.payment_reference ? ` · ref ${lease.payment_reference}` : ""}
+                {lease.confirmed_at ? ` · confirmed by the landlord ${lease.confirmed_at.slice(0, 10)}` : " · awaiting landlord confirmation"}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-text-muted">Prototype template — register the contract with Ejari (Dubai) or Tawtheeq (Abu Dhabi).</p>
+          </section>
+        )}
 
         <div
           className="mt-6 rounded-lg border bg-surface p-6"

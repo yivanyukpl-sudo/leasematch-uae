@@ -100,3 +100,12 @@ export function contractText(i: { ownerName: string; tenantName: string; address
     ],
   };
 }
+
+// Last day of the tenancy: start date + months - 1 day (YYYY-MM-DD).
+export function leaseEndDate(t: Pick<LeaseTerms, "startDate" | "months">): string {
+  const [y, m, day] = t.startDate.split("-").map(Number);
+  const target = new Date(Date.UTC(y, m - 1 + t.months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(day, lastDay) - 1 || 0);
+  return target.toISOString().slice(0, 10);
+}
