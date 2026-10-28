@@ -423,7 +423,7 @@ export default async function LeasePage({
         <h1 className="font-display text-2xl font-semibold mb-6">Lease agreement</h1>
 
         <StageTracker stage={lease.stage} />
-        <GuideTour id="lease" steps={TOURS.lease} />
+        <GuideTour id={isTenant ? "lease-tenant" : "lease-provider"} steps={TOURS[isTenant ? "lease-tenant" : "lease-provider"]} />
 
         <div className="mt-6">
           <DealAssistant leaseId={lease.id} steps={steps} current={step} message={assistantMessage(step, role, dealState)} />

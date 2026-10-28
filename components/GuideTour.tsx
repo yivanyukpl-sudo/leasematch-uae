@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type TourStep = { target?: string; title: string; body: string };
 
 // A click-through guide: highlights one element at a time with a short
 // explanation. Opens automatically on the first visit to a screen (per
 // browser) and can be replayed from the "Guide" button.
+const TOUR_VERSION = 2;
+
 export function GuideTour({ id, steps, label = "Page guide" }: { id: string; steps: TourStep[]; label?: string }) {
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const key = `lm-tour-${id}`;
+  // Bump TOUR_VERSION when the tips change so everyone sees them once more.
+  const key = `lm-tour-${TOUR_VERSION}-${id}`;
 
   useEffect(() => {
     let seen = true;
@@ -29,23 +32,30 @@ export function GuideTour({ id, steps, label = "Page guide" }: { id: string; ste
   const visibleSteps = steps;
   const step = visibleSteps[i];
 
+  const target = useRef<Element | null>(null);
   const measure = useCallback(() => {
-    if (!step?.target) return setRect(null);
-    const el = document.querySelector(`[data-tour="${step.target}"]`);
+    target.current = step?.target ? document.querySelector(`[data-tour="${step.target}"]`) : null;
+    const el = target.current;
     if (!el) return setRect(null);
     // Bring the target near the top so the tip card fits below it.
     window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 96), behavior: "smooth" });
-    setTimeout(() => setRect(el.getBoundingClientRect()), 350);
+    setRect(el.getBoundingClientRect());
   }, [step]);
 
   useEffect(() => {
     if (!open) return;
     const raf = requestAnimationFrame(measure);
     const onResize = () => measure();
+    // Follow the target while the smooth scroll (or the user) moves the page.
+    const onScroll = () => {
+      if (target.current) setRect(target.current.getBoundingClientRect());
+    };
     window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [open, measure]);
 
