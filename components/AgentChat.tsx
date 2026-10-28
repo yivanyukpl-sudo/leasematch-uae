@@ -96,7 +96,7 @@ export function AgentChat({ agentConfigured }: { agentConfigured: boolean }) {
               whiteSpace: "pre-wrap",
             }}
           >
-            {m.content}
+            {m.role === "assistant" ? <Linkified text={m.content} /> : m.content}
           </div>
         ))}
         {loading && (
@@ -195,5 +195,28 @@ export function AgentChat({ agentConfigured }: { agentConfigured: boolean }) {
         </button>
       </form>
     </div>
+  );
+}
+
+// Turns bare https:// URLs in an agent reply into links that open in a new
+// tab (the agent writes plain text; URLs are pasted bare by design).
+function Linkified({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s<>"')\]]+)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (!/^https?:\/\//.test(part)) return part;
+        const url = part.replace(/[.,;:!?]+$/, "");
+        const trailing = part.slice(url.length);
+        return (
+          <span key={i}>
+            <a href={url} target="_blank" rel="noopener noreferrer nofollow" className="break-all underline" style={{ color: "var(--accent)" }}>
+              {url}
+            </a>
+            {trailing}
+          </span>
+        );
+      })}
+    </>
   );
 }
