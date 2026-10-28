@@ -33,7 +33,8 @@ export function GuideTour({ id, steps, label = "Page guide" }: { id: string; ste
     if (!step?.target) return setRect(null);
     const el = document.querySelector(`[data-tour="${step.target}"]`);
     if (!el) return setRect(null);
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // Bring the target near the top so the tip card fits below it.
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 96), behavior: "smooth" });
     setTimeout(() => setRect(el.getBoundingClientRect()), 350);
   }, [step]);
 
@@ -71,7 +72,16 @@ export function GuideTour({ id, steps, label = "Page guide" }: { id: string; ste
   }, [open, visibleSteps.length]);
 
   const pad = 8;
-  const cardTop = rect ? (rect.bottom + 200 < window.innerHeight ? rect.bottom + 14 : Math.max(16, rect.top - 200)) : undefined;
+  // Below the target if it fits, else above it, else pinned to the bottom
+  // of the screen (for targets taller than the viewport).
+  const CARD_H = 240;
+  const cardTop = rect
+    ? rect.bottom + 14 + CARD_H < window.innerHeight
+      ? rect.bottom + 14
+      : rect.top - 14 - CARD_H > 16
+        ? rect.top - 14 - CARD_H
+        : window.innerHeight - CARD_H - 16
+    : undefined;
   const cardLeft = rect ? Math.min(Math.max(16, rect.left), window.innerWidth - 360) : undefined;
 
   return (

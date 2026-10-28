@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PropertyPhoto } from "@/components/PropertyCard";
 import { SiteHeader } from "@/components/SiteHeader";
+import { GuideTour } from "@/components/GuideTour";
+import { TOURS } from "@/lib/tours";
 import { getSession } from "@/lib/auth";
 import { getProfileById, getPropertyById, listLeasesForUser, listPropertiesByProvider, type Lease } from "@/lib/db";
 import { leaseEndDate, type LeaseTerms } from "@/lib/deal";
@@ -51,6 +53,7 @@ export default async function LeasesPage() {
           Concluded agreements are signed by both sides and paid. Open one to see the full signed contract, payment and key handover.
         </p>
 
+        <GuideTour id={isTenant ? "leases-tenant" : "leases-provider"} steps={TOURS[isTenant ? "leases-tenant" : "leases-provider"]} />
         <div className="mt-6 grid gap-3 sm:grid-cols-3" data-tour="leases-summary">
           <Stat label="In force" value={String(concluded.length)} note="signed and paid" />
           <Stat label="In progress" value={String(inProgress.length)} note="terms, signing or payment" />
@@ -62,7 +65,7 @@ export default async function LeasesPage() {
         </div>
 
         {!isTenant && properties.length > 0 && (
-          <section className="mt-8">
+          <section className="mt-8" data-tour="leases-by-property">
             <h2 className="mb-3 font-display text-lg font-semibold">By property</h2>
             <div className="overflow-x-auto rounded-lg border bg-surface" style={{ borderColor: "var(--border)" }}>
               <table className="w-full text-sm">
@@ -104,11 +107,11 @@ export default async function LeasesPage() {
           </section>
         )}
 
-        <Section title="Concluded agreements" empty={copy.empty}>
+        <Section title="Concluded agreements" empty={copy.empty} tour="leases-concluded">
           {concluded.map((l) => <LeaseRow key={l.id} lease={l} isTenant={isTenant} otherLabel={copy.other} />)}
         </Section>
 
-        <Section title="In progress" empty="Nothing in progress.">
+        <Section title="In progress" empty="Nothing in progress." tour="leases-in-progress">
           {inProgress.map((l) => <LeaseRow key={l.id} lease={l} isTenant={isTenant} otherLabel={copy.other} />)}
         </Section>
       </main>
@@ -126,9 +129,9 @@ function Stat({ label, value, note }: { label: string; value: string; note: stri
   );
 }
 
-function Section({ title, empty, children }: { title: string; empty: string; children: React.ReactNode[] }) {
+function Section({ title, empty, tour, children }: { title: string; empty: string; tour: string; children: React.ReactNode[] }) {
   return (
-    <section className="mt-8">
+    <section className="mt-8" data-tour={tour}>
       <h2 className="mb-3 font-display text-lg font-semibold">{title}</h2>
       {children.length === 0 ? (
         <p className="rounded-lg border border-dashed p-6 text-sm text-text-muted" style={{ borderColor: "var(--border)" }}>{empty}</p>

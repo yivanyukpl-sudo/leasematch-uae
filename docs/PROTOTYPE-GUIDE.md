@@ -33,10 +33,8 @@ These are sample accounts on sample data.
 4. **New account:** `/signup`, then choose a role — tenant, landlord, broker
    or property manager. Brokers and property managers must give a company
    name.
-5. **Leases** (header): every lease agreement for your account — concluded
-   (signed, paid, in force) and in progress. Landlords, agencies and property
-   managers also see a per-property table with lease end dates and renewals
-   due within 90 days. Open a lease to read the full signed contract.
+5. **Leases** (header): all your lease agreements — see
+   [Lease agreements](#lease-agreements) below.
 6. **Sign out** from the header. A session lasts 30 days.
 
 To test a full deal, use two browsers (or a private window): tenant in one,
@@ -45,6 +43,25 @@ it on the listing's **Applicants** page, and both continue on the lease page.
 
 Each main screen opens a short click-through guide on first visit; reopen it
 with **? Guide** at the bottom right.
+
+## Lease agreements
+
+Open **Leases** in the header (`/dashboard/leases`). Every account type has
+this page; the heading changes with the account: **My tenancies** (tenant),
+**My properties** (landlord), **Deals you brokered** (agency) and
+**Portfolio** (leasing office / property manager).
+
+| Section | What appears there | When it gets there |
+| --- | --- | --- |
+| Summary tiles | Leases in force, leases in progress, and annual rent (tenant) or renewals due within 90 days (landlord, agency, property manager) | Always |
+| By property *(landlords, agencies, property managers)* | One row per unit you list: **Leased** with tenant and lease end date, a lease **in progress**, or **Vacant**; "renewal due" when the lease ends within 90 days | As soon as you have a listing |
+| Concluded agreements | Leases **in force**: property, other party, term dates (start → end), cheques, signing date, payment reference | When both sides have signed **and** the landlord has confirmed the first payment |
+| In progress | Leases not yet in force, with the current step (awaiting signatures, payment or confirmation) | From the moment a landlord **approves an application** until the payment is confirmed |
+
+Click any lease to open it. Once both sides have signed, the lease page shows
+the **Signed agreement**: the full contract text, both signatures with date
+and time, term dates, and the payment reference. Each section also has a
+click-through tip (**? Guide**, bottom right).
 
 ## A 3-minute tour
 
@@ -60,6 +77,9 @@ with **? Guide** at the bottom right.
    (simulated payment) → **AI photo inspection** (optional) → both sign →
    first payment → landlord confirms → keys. Signing stays locked until terms
    are saved and the package is paid.
+6. **Leases** (header): the concluded lease now appears under **Concluded
+   agreements** for both the tenant and the landlord; open it to read the
+   signed contract.
 
 ## Key flows
 
