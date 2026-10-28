@@ -24,6 +24,9 @@ export async function SiteHeader() {
           <Link href="/demos" className="text-text-muted hover:text-text">
             Demos
           </Link>
+          <a href="https://github.com/yivanyukpl-sudo/leasematch-uae/blob/main/docs/PROTOTYPE-GUIDE.md" target="_blank" rel="noopener noreferrer" className="hidden text-text-muted hover:text-text sm:inline">
+            How to use
+          </a>
           {session ? (
             <>
               <Link href="/listings" className="hidden text-text-muted hover:text-text sm:inline">

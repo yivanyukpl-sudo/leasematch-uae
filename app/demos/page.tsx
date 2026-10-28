@@ -105,6 +105,15 @@ export default function DemosPage() {
           Demos &amp; simulations
         </p>
         <h1 className="font-display text-2xl font-semibold">See LeaseMatch end to end</h1>
+          <a
+            href="https://github.com/yivanyukpl-sudo/leasematch-uae/blob/main/docs/PROTOTYPE-GUIDE.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-block rounded-md border px-3 py-2 text-sm font-medium"
+            style={{ borderColor: "var(--border)", color: "var(--accent)" }}
+          >
+            Read the prototype guide: logins, a 3-minute tour, limitations ↗
+          </a>
         <p className="mt-1 mb-8 max-w-2xl text-sm text-text-muted">
           The HTML prototypes the app was built from, and simulations of agent features that
           aren&apos;t live yet. All of them use sample data only.

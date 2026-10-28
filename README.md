@@ -11,6 +11,7 @@ agent phone calls are simulated, and listings are sample data.
 
 - **Live prototype:** https://leasematch-uae.onrender.com
 - **Code:** https://github.com/yivanyukpl-sudo/leasematch-uae
+- **How to use the prototype:** [docs/PROTOTYPE-GUIDE.md](docs/PROTOTYPE-GUIDE.md) — logins, a 3-minute tour, key flows and limitations
 - **Tenant login:** `demo.tenant@leasematchuae.test` / `LeaseMatch-tenant-2026`
 - **Landlord logins:** `marina.pm@sample.leasematch.test`, `owner.skyline@sample.leasematch.test`, `meadows@sample.leasematch.test` — password `LeaseMatch-demo-2026`
 
